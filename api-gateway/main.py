@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 from config import settings
@@ -24,6 +25,18 @@ app = FastAPI(
     description="Asynchronous entry point and reverse proxy for local inference services",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Cross-Origin Resource Sharing (CORS) Middleware: Allows front-end clients running on common dev ports (e.g., Vite on 5173) to reach the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/health")
