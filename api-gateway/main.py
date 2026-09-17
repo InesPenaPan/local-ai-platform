@@ -34,6 +34,7 @@ async def health():
     return {"status": "healthy", "service": "api-gateway"}
 
 
+
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def proxy_chat(payload: ChatRequest):
     """

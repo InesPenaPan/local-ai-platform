@@ -1,5 +1,5 @@
 
-# LLM Service: Local Models Interface 🧠
+# 🧠 LLM Service: Local Models Interface
 
 > This microservice is part of an agent-based chatbot architecture. Built with **FastAPI**, it acts as the abstraction layer to communicate with open-source Large Language Models (LLMs) running locally via **Ollama**.
 
@@ -39,6 +39,9 @@ ollama run llama3.1
 ### Step 2: Start the FastAPI Server
 In your project terminal (with the `venv` activated), start the Uvicorn server on port 8001:
 ```PowerShell
+python -m venv venv
+.\venv\Scripts\activate
+
 uvicorn main:app --port 8001 --reload
 ```
 
