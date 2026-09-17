@@ -1,26 +1,29 @@
 import { MessageSquare, Database, Settings, Sparkles } from "lucide-react";
 
+import logo from "../../assets/eva.png";
+
 export default function Header({ currentTab, onSelectTab }) {
+  // Define navigation items with their respective icons and identifiers
   const navItems = [
     { id: "chat", label: "Chat", icon: MessageSquare },
     { id: "rag", label: "Knowledge / RAG", icon: Database },
-    { id: "settings", label: "Configuración", icon: Settings },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
-    <header className="px-6 py-2.5 border-b border-slate-800 bg-slate-900/80 backdrop-blur flex justify-between items-center select-none">
-      {/* Brand */}
-      <div className="flex items-center gap-2.5">
-        <div className="p-1.5 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20">
-          <Sparkles size={16} />
+    <header className="px-8 py-4 border-b border-white/5 bg-[#111927]/95 backdrop-blur-xl grid grid-cols-3 items-center select-none shadow-lg z-50 sticky top-0">
+      
+      {/* Left Column: Brand Identity */}
+      <div className="flex items-center gap-4 justify-self-start cursor-pointer group">
+        <div className="flex flex-col">
+          <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3b82f6] to-[#DE145C] tracking-wide">
+              Local AI Platform
+          </p>
         </div>
-        <span className="text-sm font-semibold tracking-wide text-white">
-          Local AI Platform
-        </span>
       </div>
 
-      {/* Navigation tabs */}
-      <nav className="flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80">
+      {/* Center Column: Navigation Bar */}
+      <nav className="flex items-center gap-2 bg-black/20 backdrop-blur-md p-2 rounded-2xl border border-white/5 justify-self-center shadow-inner">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
@@ -29,26 +32,28 @@ export default function Header({ currentTab, onSelectTab }) {
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-3 px-6 py-2.5 rounded-xl text-base font-semibold transition-all duration-300 ease-out ${
                 isActive
-                  ? "bg-slate-800 text-white shadow-sm border border-slate-700/60"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                  ? "bg-[#1e293b]/80 text-white shadow-lg border border-white/10 ring-1 ring-[#DE145C]/30 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
               }`}
             >
-              <Icon size={14} className={isActive ? "text-blue-400" : ""} />
-              <span>{item.label}</span>
+              <Icon
+                size={20}
+                strokeWidth={isActive ? 2.5 : 2}
+                className={`transition-colors duration-300 ${
+                  isActive ? "text-[#DE145C]" : "text-slate-400"
+                }`}
+              />
+              <span className="tracking-wide">{item.label}</span>
             </button>
           );
         })}
       </nav>
 
-      {/* Status */}
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-          Gateway :8000
-        </span>
-      </div>
+      {/* Right Column: Blank */}
+      <div className="justify-self-end flex items-center"> </div>
+
     </header>
   );
 }
