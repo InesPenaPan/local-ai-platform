@@ -13,7 +13,7 @@ Before running this microservice, ensure you have the following installed and co
 | **Ollama** | [Download Ollama](https://ollama.com/) and ensure it is running in the background (`http://localhost:11434`). |
 | **LLM Models** | You need to download the models locally |
 
-## 📁 Project Structure
+## 📁 Structure
 
 ```bash
 llm-service/
