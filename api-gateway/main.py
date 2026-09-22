@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
+
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
@@ -57,7 +58,7 @@ async def proxy_chat(payload: ChatRequest):
     try:
         # Forward request payload to the internal LLM service on port 8001
         response = await http_client.post(
-            settings.LLM_SERVICE_URL,
+            "http://llm-service:8001/generate",
             json=payload.model_dump()
         )
         response.raise_for_status()

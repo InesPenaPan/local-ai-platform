@@ -10,3 +10,25 @@ local-ai-platform/
 ├── README.md               # Global platform documentation and ecosystem setup
 └── llm-service/            # Downstream service interfacing with local LLMs
 ```
+
+## 🚀 Running the App
+
+To run the pltaform, ensure you have Docker, Docker Compose, and [Ollama](https://ollama.com/) installed on your system.
+
+1. Start your local Ollama instance and ensure the required model is loaded or available:
+
+```PowerShell
+ollama run llama3.1
+```
+
+2. Open your terminal, navigate to the root directory of the project where the `docker-compose.yml` file is located, and build/start the containers in detached mode:
+
+```PowerShell
+docker compose up --build -d
+```
+
+3. Verify that all services are up and running successfully:
+
+```PowerShell
+docker compose ps
+```

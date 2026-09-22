@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, ChevronDown, Sparkles } from "lucide-react";
 
-import Sidebar from "./subcomponents/Sidebar";
-import Header from "../../components/layout/Header";
+import Sidebar from "./subcomponents/SideBar";
 
 export default function ChatPage() {
   const [currentTab, setCurrentTab] = useState("chat");
@@ -57,21 +56,18 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-      
-      {/* Header */}
-      <Header currentTab={currentTab} onSelectTab={setCurrentTab} />
+    <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
 
       {/* Main Wrapper */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-full overflow-hidden">
         
         {/* Sidebar */}
         <Sidebar currentItem="agents" />
 
         {/* Main Area Chat */}
-        <main className="flex-1 flex flex-col overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
+        <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
           
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar relative">
             
             {/* Empty State */}
             {messages.length === 0 && (
@@ -93,7 +89,7 @@ export default function ChatPage() {
             )}
 
             {/* Chat History Container */}
-            <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-12 space-y-8 relative z-10">
+            <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-12 space-y-8 relative z-10 pb-24">
               
               {/* Message Bubbles Map */}
               {messages.map((msg, idx) => (
@@ -146,7 +142,7 @@ export default function ChatPage() {
           </div>
 
           {/* Bottom Input Area */}
-          <footer className="px-6 py-6 bg-gradient-to-t from-[#04070c] via-[#04070c]/95 to-transparent pt-10 relative z-30">
+          <footer className="shrink-0 px-6 py-6 bg-gradient-to-t from-[#04070c] via-[#04070c]/95 to-transparent relative z-30">
             <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-3 relative">
               
               {/* Model Selector Dropdown */}

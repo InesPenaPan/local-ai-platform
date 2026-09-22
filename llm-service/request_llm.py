@@ -14,7 +14,8 @@ def generate_from_ollama(model_name: str, prompt: str) -> str:
     Raises:
         Exception: If the connection to Ollama fails or returns an error.
     """
-    ollama_url = "http://localhost:11434/api/generate"
+    # ollama_url = "http://localhost:11434/api/generate"
+    ollama_url = "http://host.docker.internal:11434/api/generate"
     
     payload = {
         "model": model_name,
