@@ -135,3 +135,51 @@ async def proxy_get_collections():
             status_code=exc.response.status_code,
             detail=f"Downstream RAG service error: {exc.response.text}"
         )
+
+@router.post("agents/create-agent")
+async def proxy_create_agent(payload: dict):
+    """
+    Forwards a request to create a new agent to the downstream agent-service (port 8003).
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                "http://agent-service:8003/create-agent",
+                json=payload
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream agent-service is unreachable (port 8003 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream agent-service error: {exc.response.text}"
+        )
+
+
+@router.get("agents/list")
+async def proxy_get_agents():
+    """
+    Fetches the list of all created agents from the downstream agent-service (port 8003).
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get("http://agent-service:8003/list")
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream agent-service is unreachable (port 8003 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream agent-service error: {exc.response.text}"
+        )

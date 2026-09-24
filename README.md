@@ -32,3 +32,12 @@ docker compose up --build -d
 ```PowerShell
 docker compose ps
 ```
+
+## User Interface
+
+Once your containers are up and running, you can access the platform's services and UIs through the following ports:
+
+* Frontend Application (Web UI): http://localhost:5173
+* Qdrant Vector Database (Dashboard UI): http://localhost:6333/dashboard
+
+

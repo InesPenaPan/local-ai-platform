@@ -12,6 +12,8 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
     restart: always
+    networks:
+      - ai_network
 
   # LLM Service (Port 8001)
   llm-service:
@@ -22,6 +24,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
+    networks:
+      - ai_network
 
   # RAG Service (Port 8002) - Gestiona documentos, embeddings y Qdrant
   rag-service:
@@ -38,6 +42,8 @@ services:
       - qdrant
       - llm-service
     restart: always
+    networks:
+      - ai_network
 
   # API Gateway (Port 8000)
   api-gateway:
@@ -48,10 +54,14 @@ services:
     environment:
       - LLM_SERVICE_URL=http://llm-service:8001
       - RAG_SERVICE_URL=http://rag-service:8002
+      - AGENT_SERVICE_URL=http://agent_service:8003
     depends_on:
       - llm-service
       - rag-service
+      - agent_service
     restart: always
+    networks:
+      - ai_network
 
   # Front-end (Port 5173)
   ai-app:
@@ -62,6 +72,24 @@ services:
     depends_on:
       - api-gateway
     restart: always
+    networks:
+      - ai_network
+
+  # Agent Service (Port 8003)
+  agent_service:
+    build: ./agent-service
+    container_name: agent_service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./agent-service:/app
+    restart: unless-stopped
+    networks:
+      - ai_network
 
 volumes:
   qdrant_storage:
+
+networks:
+  ai_network:
+    driver: bridge
