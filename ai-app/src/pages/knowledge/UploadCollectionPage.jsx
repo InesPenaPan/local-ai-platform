@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 
+import FormWrapper from "../../components/layout/FormWrapper"; // 
+
 export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   // State variables for form inputs, loading state, and feedback messages
   const [collectionName, setCollectionName] = useState("");
@@ -98,12 +100,8 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
             </div>
           </div>
 
-          {/* Upload Form Card Container */}
-          <div className="bg-[#0a0f18]/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-            
-            {/* Top decorative gradient accent line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#3b82f6] to-[#DE145C]"></div>
-
+          {/* FormWrapper REEMPLAZA EL CONTENEDOR ANTERIOR */}
+          <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Collection Name Input Field */}
@@ -191,7 +189,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
               </div>
 
             </form>
-          </div>
+          </FormWrapper>
 
         </div>
       </main>

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Bot, Save, Settings2, Database, Sliders, Fingerprint, Loader2 } from "lucide-react";
+
 import Sidebar from "./subcomponents/SideBar";
+import PageHeader from "../../components/ui/PageHeader";
+import FormWrapper from "../../components/layout/FormWrapper"; 
 
 export default function CreateAgentPage() {
   const [loading, setLoading] = useState(false);
@@ -21,49 +24,26 @@ export default function CreateAgentPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Aquí iría tu llamada al API Gateway para guardar el agente
     console.log("Guardando agente:", formData);
-    
-    setTimeout(() => {
-      setLoading(false);
-      // Lógica posterior: redirigir o mostrar mensaje de éxito
-    }, 1500);
+    setTimeout(() => setLoading(false), 1500);
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-      
-      {/* Main Wrapper */}
       <div className="flex flex-1 h-full overflow-hidden">
-        
-        {/* Sidebar */}
         <Sidebar currentItem="agents" />
 
-        {/* Main Area: Agent Form */}
         <main className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto custom-scrollbar relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)] p-8 md:p-12">
-          
           <div className="max-w-3xl w-full mx-auto pb-12">
             
-            {/* Header */}
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
-              <div>
-                <h1 className="text-3xl font-bold text-white tracking-wide flex items-center gap-3">
-                  <Bot size={32} className="text-[#3b82f6]" />
-                  Create New Agent
-                </h1>
-                <p className="text-slate-400 text-sm mt-2 font-light tracking-wide">
-                  Define the identity, instructions, and knowledge base for your custom AI assistant.
-                </p>
-              </div>
+              <PageHeader 
+                title="New Agent"
+                subtitle="Define the identity, instructions, and knowledge base for your custom AI assistant."
+              />
             </div>
 
-            {/* Form Container */}
-            <div className="bg-[#0a0f18]/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-              
-              {/* Decorative top gradient */}
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#3b82f6] to-[#DE145C]"></div>
-
+            <FormWrapper>
               <form onSubmit={handleSubmit} className="space-y-8">
                 
                 {/* Section 1: Basic Identity */}
@@ -138,7 +118,6 @@ export default function CreateAgentPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Model Selection */}
                     <div>
                       <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                         Base LLM Model
@@ -155,7 +134,6 @@ export default function CreateAgentPage() {
                       </select>
                     </div>
 
-                    {/* Knowledge Base (Qdrant Collection) */}
                     <div>
                       <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                         Attach Knowledge Base (RAG)
@@ -173,7 +151,6 @@ export default function CreateAgentPage() {
                     </div>
                   </div>
 
-                  {/* Temperature Slider */}
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-2">
                       <label className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -220,7 +197,8 @@ export default function CreateAgentPage() {
                 </div>
 
               </form>
-            </div>
+            </FormWrapper>
+
           </div>
         </main>
       </div>

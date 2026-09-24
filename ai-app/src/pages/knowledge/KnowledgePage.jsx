@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Database, Plus, FileText, Layers, HardDrive, FolderPlus, Loader2, Activity } from "lucide-react";
+import { Plus, FolderPlus, Loader2 } from "lucide-react";
 
 import UploadCollectionPage from "./UploadCollectionPage";
+import PageHeader from "../../components/ui/PageHeader";
+import CollectionBattleCard from "./subcomponents/CollectionBattleCard"; 
 
 export default function KnowledgePage() {
   const [currentView, setCurrentView] = useState("grid");
@@ -40,16 +42,8 @@ export default function KnowledgePage() {
 
   // Handler triggered when a collection is created in the upload view
   const handleCollectionCreated = () => {
-    // Re-fetch from the database to get the real metrics instead of mocking
+    // Re-fetch from the database to get the real metrics
     fetchCollections();
-  };
-
-  // Helper to format collection names (e.g., "financial_reports" -> "Financial Reports")
-  const formatName = (name) => {
-    return name
-      .split("_")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
   };
 
   if (currentView === "upload") {
@@ -69,16 +63,10 @@ export default function KnowledgePage() {
         
         {/* Header Section */}
         <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-white/5 mb-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-white tracking-wide">
-                Knowledge Base
-              </h1>
-            </div>
-            <p className="text-slate-400 text-sm md:text-base mt-2 font-light tracking-wide">
-              Manage your local vector collections, documents, and RAG ingestion pipelines securely.
-            </p>
-          </div>
+          <PageHeader 
+            title="Knowledge Base"
+            subtitle="Manage your local vector collections, documents, and RAG ingestion pipelines securely."
+          />
 
           <button
             onClick={handleNewModal}
@@ -109,60 +97,7 @@ export default function KnowledgePage() {
           <div className="max-w-6xl w-full mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
             
             {collections.map((col) => (
-              <div
-                key={col.name}
-                className="bg-[#0a0f18]/80 backdrop-blur-md border border-white/10 hover:border-white/20 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-xl group hover:shadow-[0_4px_25px_rgba(59,130,246,0.1)] relative overflow-hidden"
-              >
-                {/* Subtle top accent gradient line */}
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#3b82f6]/50 to-[#DE145C]/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                {/* Card Header */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#111927] border border-white/5 flex items-center justify-center text-[#3b82f6] shadow-inner">
-                      <Database size={20} strokeWidth={2} />
-                    </div>
-                    {/* Dynamic Status Badge */}
-                    <span className={`text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full border ${
-                      col.status === 'GREEN' 
-                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
-                        : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                    }`}>
-                      {col.status}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-semibold text-slate-100 tracking-wide mb-2 group-hover:text-[#3b82f6] transition-colors truncate">
-                    {formatName(col.name)}
-                  </h3>
-                  
-                  {/* Technical Meta Description */}
-                  <div className="text-sm text-slate-400 font-light leading-relaxed mb-6 space-y-1">
-                    <p className="flex items-center gap-2">
-                      <Layers size={14} className="text-slate-500" />
-                      Dimensions: <span className="text-slate-300">{col.vector_size}</span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Activity size={14} className="text-slate-500" />
-                      Indexed: <span className="text-slate-300">{col.indexed_vectors_count} / {col.vectors_count}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card Footer: Core Metrics */}
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1.5" title="Total Unique Documents">
-                      <FileText size={14} className="text-[#DE145C]/70" />
-                      <span className="font-medium text-slate-300">{col.document_count}</span> docs
-                    </span>
-                    <span className="flex items-center gap-1.5" title="Total Vector Chunks">
-                      <HardDrive size={14} className="text-[#3b82f6]/70" />
-                      <span className="font-medium text-slate-300">{col.vectors_count}</span> chunks
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <CollectionBattleCard key={col.name} col={col} />
             ))}
 
             {/* Empty / Create Card Placeholder */}
