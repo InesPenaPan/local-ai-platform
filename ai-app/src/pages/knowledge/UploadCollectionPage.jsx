@@ -18,7 +18,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
     }
   };
 
-  // Handle form submission, form validation, and communication with the Ingestion Service (:8001)
+  // Handle form submission, form validation, and communication with the API Gateway (:8000)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!collectionName.trim()) {
@@ -34,18 +34,22 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
     setError("");
 
     try {
-      // 1. Prepare FormData containing the file for the Ingestion Service API
+      // 1. Prepare FormData containing the file and metadata for the API Gateway
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("collection_name", collectionName);
+      if (description) {
+        formData.append("description", description);
+      }
 
-      // 2. Send HTTP POST request to the Ingestion Service running on port 8001
+      // 2. Send HTTP POST request to the API Gateway running on port 8000
       const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
         method: "POST",
         body: formData,
       });
 
       if (!res.ok) {
-        throw new Error(`Ingestion service returned status: ${res.status}`);
+        throw new Error(`API Gateway returned status: ${res.status}`);
       }
 
       const data = await res.json();
@@ -66,7 +70,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
       }, 1500);
 
     } catch (err) {
-      setError("Failed to connect to Ingestion Service (Port 8001). Make sure it's running.");
+      setError("Failed to connect to API Gateway (Port 8000). Make sure Docker containers are running.");
     } finally {
       setLoading(false);
     }

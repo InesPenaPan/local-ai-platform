@@ -11,9 +11,10 @@ from docx import Document
 COLLECTION_NAME = "personal_documents"
 
 # Initialize the Ollama client for local vector embeddings.
+# Initialize the Ollama client for local vector embeddings.
 _embeddings_client = OllamaEmbeddings(
     model="nomic-embed-text",
-    base_url="http://ollama:11434"
+    base_url="http://host.docker.internal:11434"
 )
 
 # Initialize the Qdrant client for vector database interactions.
