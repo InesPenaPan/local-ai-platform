@@ -1,5 +1,8 @@
+import os
 from langchain_community.embeddings import OllamaEmbeddings
 from qdrant_client import QdrantClient
+from pypdf import PdfReader
+from docx import Document
 
 # Initialize the Ollama client for local vector embeddings.
 _embeddings_client = OllamaEmbeddings(
@@ -39,3 +42,27 @@ def check_system_health() -> dict:
         "embedding_model": "nomic-embed-text",
         "vector_db_connected": db_status
     }
+
+def extract_text_from_file(file_path: str, filename: str) -> str:
+    """
+    Extract raw text from PDF or Word (docx) files based on their extension.
+    """
+    text = ""
+    file_extension = filename.lower().split(".")[-1]
+
+    if file_extension == "pdf":
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+
+    elif file_extension in ["doc", "docx"]:
+        doc = Document(file_path)
+        for paragraph in doc.paragraphs:
+            if paragraph.text:
+                text += paragraph.text + "\n"
+    else:
+        raise ValueError(f"Unsupported file format: .{file_extension}")
+
+    return text.strip()
