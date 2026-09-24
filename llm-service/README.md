@@ -1,4 +1,3 @@
-
 # 🧠 LLM Service: Local Models Interface
 
 > This microservice is part of an agent-based chatbot architecture. Built with **FastAPI**, it acts as the abstraction layer to communicate with open-source Large Language Models (LLMs) running locally via **Ollama**.
