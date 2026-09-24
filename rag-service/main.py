@@ -3,12 +3,18 @@ import shutil
 import os
 
 from models import TextEmbeddingRequest, EmbeddingResponse
-from rag_logic import generate_text_embedding, check_system_health, extract_text_from_file
+from rag_logic import (
+    generate_text_embedding, 
+    check_system_health, 
+    extract_text_from_file, 
+    split_text_into_chunks,
+    store_chunks_in_qdrant
+)
 
 # Initialize FastAPI app with descriptive metadata
 app = FastAPI(
     title="Local Enterprise RAG Service",
-    description="Microservice handling vector embeddings via Ollama, health checks for Qdrant, and document parsing.",
+    description="Microservice handling vector embeddings via Ollama, health checks for Qdrant, and document parsing with chunking and storage.",
     version="1.0.0"
 )
 
@@ -21,7 +27,7 @@ def health_check_route():
 @app.post("/embeddings", response_model=EmbeddingResponse, tags=["AI Operations"])
 def generate_embedding_route(payload: TextEmbeddingRequest):
     try:
-        # Generate the vector using our core operations logic
+        # Generate the vector using core operations logic
         vector = generate_text_embedding(payload.text)
         
         # Return response matching the EmbeddingResponse model
@@ -33,7 +39,7 @@ def generate_embedding_route(payload: TextEmbeddingRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Endpoint to upload and parse PDF or Word documents
+# Endpoint to upload, parse, chunk, and store documents permanently in Qdrant
 @app.post("/upload-document", tags=["Document Processing"])
 async def upload_document_route(file: UploadFile = File(...)):
     filename = file.filename
@@ -43,31 +49,34 @@ async def upload_document_route(file: UploadFile = File(...)):
     temp_file_path = f"temp_{filename}"
 
     try:
-        # Save temporary file locally
+        # Save uploaded file temporarily on disk
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Extract text content from file
+        # 1. Extract raw text content from the file
         document_text = extract_text_from_file(temp_file_path, filename)
         
         if not document_text:
             raise HTTPException(status_code=400, detail="The document is empty or text could not be extracted.")
 
-        # Generate preview embedding from extracted text chunk
-        vector = generate_text_embedding(document_text[:2000])
+        # 2. Apply text chunking to split text into manageable parts
+        chunks = split_text_into_chunks(document_text, chunk_size=1000, chunk_overlap=200)
+
+        # 3. Generate embeddings for all chunks and store them in Qdrant
+        stored_count = store_chunks_in_qdrant(chunks, filename)
 
         return {
             "filename": filename,
             "extracted_characters": len(document_text),
-            "vector_dimension": len(vector),
-            "vector_preview": vector[:5],
-            "message": "Document successfully processed and embedded."
+            "total_chunks": len(chunks),
+            "chunks_stored": stored_count,
+            "message": "Document successfully processed, chunked, and stored in Qdrant."
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        # Clean up temporary file
+        # Clean up temporary file from local disk
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
