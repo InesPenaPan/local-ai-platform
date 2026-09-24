@@ -4,7 +4,6 @@ import { UploadCloud, FileText, CheckCircle2, Loader2, ArrowLeft } from "lucide-
 export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   // State variables for form inputs, loading state, and feedback messages
   const [collectionName, setCollectionName] = useState("");
-  const [description, setDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +17,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
     }
   };
 
-  // Handle form submission, form validation, and communication with the API Gateway (:8000)
+  // Handle form submission, form validation, and communication with the API Gateway
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!collectionName.trim()) {
@@ -34,13 +33,10 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
     setError("");
 
     try {
-      // 1. Prepare FormData containing the file and metadata for the API Gateway
+      // 1. Prepare FormData containing the file and metadata
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("collection_name", collectionName);
-      if (description) {
-        formData.append("description", description);
-      }
 
       // 2. Send HTTP POST request to the API Gateway running on port 8000
       const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
@@ -62,7 +58,6 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
         if (onCollectionCreated) {
           onCollectionCreated({
             name: collectionName,
-            description: description || "Custom uploaded collection",
             chunks: data.chunks_stored,
           });
         }
@@ -100,9 +95,6 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
               <h1 className="text-2xl font-bold text-white tracking-wide">
                 Upload New Collection
               </h1>
-              <p className="text-slate-400 text-sm mt-1 font-light">
-                Configure your dataset details and ingest a document into your local vector database.
-              </p>
             </div>
           </div>
 
@@ -126,21 +118,6 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                   placeholder="e.g., Financial Reports 2026"
                   disabled={loading}
                   className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
-                />
-              </div>
-
-              {/* Description Textarea Field */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
-                  Description (Optional)
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Briefly describe the contents of this dataset..."
-                  rows={3}
-                  disabled={loading}
-                  className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner resize-none font-light"
                 />
               </div>
 
@@ -170,7 +147,6 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                     <>
                       <UploadCloud size={34} className="text-slate-400 mb-2" />
                       <p className="text-sm font-medium text-slate-300">Click to browse file</p>
-                      <p className="text-xs text-slate-500 mt-1">Supports PDF and TXT formats</p>
                     </>
                   )}
                 </label>

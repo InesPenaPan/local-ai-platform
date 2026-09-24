@@ -7,9 +7,6 @@ from qdrant_client.http import models
 from pypdf import PdfReader
 from docx import Document
 
-# Default collection name for Qdrant vector database
-COLLECTION_NAME = "personal_documents"
-
 # Initialize the Ollama client for local vector embeddings.
 # Initialize the Ollama client for local vector embeddings.
 _embeddings_client = OllamaEmbeddings(
@@ -87,18 +84,18 @@ def split_text_into_chunks(text: str, chunk_size: int = 1000, chunk_overlap: int
     chunks = text_splitter.split_text(text)
     return chunks
 
-def ensure_collection_exists():
+def ensure_collection_exists(collection_name: str):
     """
     Ensure that the target Qdrant collection exists. 
     If not, create it with 768 dimensions matching the nomic-embed-text model.
     """
     try:
         collections = _qdrant_client.get_collections().collections
-        exists = any(col.name == COLLECTION_NAME for col in collections)
+        exists = any(col.name == collection_name for col in collections)
         
         if not exists:
             _qdrant_client.create_collection(
-                collection_name=COLLECTION_NAME,
+                collection_name=collection_name,
                 vectors_config=models.VectorParams(
                     size=768,  # Exact vector dimension for nomic-embed-text
                     distance=models.Distance.COSINE
@@ -107,12 +104,12 @@ def ensure_collection_exists():
     except Exception as e:
         raise RuntimeError(f"Failed to ensure Qdrant collection exists: {str(e)}")
 
-def store_chunks_in_qdrant(chunks: list[str], filename: str) -> int:
+def store_chunks_in_qdrant(chunks: list[str], filename: str, collection_name: str) -> int:
     """
     Generate embeddings for all text chunks and perform an upsert operation 
     to store them permanently in Qdrant along with their metadata.
     """
-    ensure_collection_exists()
+    ensure_collection_exists(collection_name)
     
     points = []
     for i, chunk in enumerate(chunks):
@@ -133,7 +130,7 @@ def store_chunks_in_qdrant(chunks: list[str], filename: str) -> int:
     
     # Perform bulk upsert into Qdrant vector database
     _qdrant_client.upsert(
-        collection_name=COLLECTION_NAME,
+        collection_name=collection_name,
         points=points
     )
     

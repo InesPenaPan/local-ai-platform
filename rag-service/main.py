@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 import shutil
 import os
 
@@ -39,12 +39,15 @@ def generate_embedding_route(payload: TextEmbeddingRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Endpoint to upload, parse, chunk, and store documents permanently in Qdrant
+# Endpoint to upload, parse, chunk, and store documents dynamically in Qdrant collections
 @app.post("/upload-document", tags=["Document Processing"])
-async def upload_document_route(file: UploadFile = File(...)):
+async def upload_document_route(
+    file: UploadFile = File(...),
+    collection_name: str = Form(...)
+):
     filename = file.filename
-    if not filename.lower().endswith((".pdf", ".docx", ".doc")):
-        raise HTTPException(status_code=400, detail="Only PDF and Word documents are allowed.")
+    if not filename.lower().endswith((".pdf", ".docx", ".doc", ".txt")):
+        raise HTTPException(status_code=400, detail="Unsupported file format.")
 
     temp_file_path = f"temp_{filename}"
 
@@ -62,11 +65,12 @@ async def upload_document_route(file: UploadFile = File(...)):
         # 2. Apply text chunking to split text into manageable parts
         chunks = split_text_into_chunks(document_text, chunk_size=1000, chunk_overlap=200)
 
-        # 3. Generate embeddings for all chunks and store them in Qdrant
-        stored_count = store_chunks_in_qdrant(chunks, filename)
+        # 3. Generate embeddings for all chunks and store them in Qdrant under the specific collection
+        stored_count = store_chunks_in_qdrant(chunks, filename, collection_name)
 
         return {
             "filename": filename,
+            "collection_used": collection_name,
             "extracted_characters": len(document_text),
             "total_chunks": len(chunks),
             "chunks_stored": stored_count,

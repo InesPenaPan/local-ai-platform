@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 import httpx
 
 from schemas import ChatRequest, ChatResponse, TextEmbeddingRequest, EmbeddingResponse
@@ -73,20 +73,27 @@ async def proxy_embeddings(payload: TextEmbeddingRequest):
 
 
 @router.post("/rag/upload-document")
-async def proxy_upload_document(file: UploadFile = File(...)):
+async def proxy_upload_document(
+    file: UploadFile = File(...),
+    collection_name: str = Form(...)
+):
     """
-    Forwards an uploaded PDF or Word document to the downstream rag-service (port 8002) with an extended timeout.
+    Forwards an uploaded document and its target collection name to the downstream RAG service.
     """
     try:
         file_bytes = await file.read()
         files = {"file": (file.filename, file_bytes, file.content_type)}
+        
+        # Only send collection_name, matching the React frontend
+        data = {"collection_name": collection_name}
 
         timeout_settings = httpx.Timeout(120.0, connect=15.0)
 
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
             response = await client.post(
                 "http://rag-service:8002/upload-document",
-                files=files
+                files=files,
+                data=data
             )
             response.raise_for_status()
             return response.json()
