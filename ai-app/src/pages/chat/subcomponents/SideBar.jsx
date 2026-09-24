@@ -1,13 +1,33 @@
-import { MessageSquarePlus, Bot, History, Compass, Edit2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageSquarePlus, Bot, Compass, Edit2, Loader2, Sparkles } from "lucide-react";
 
 import NewButton from "./NewButton"; 
 
-export default function Sidebar({ currentItem = "agents", onNewAgentClick }) {
-  const menuItems = [
-    { id: "history", label: "Chat History", icon: History },
-    { id: "agents", label: "New Agents", icon: Bot, showPlus: true },
-    { id: "explore", label: "Explore", icon: Compass },
-  ];
+export default function Sidebar({ currentItem = "agents", onNewAgentClick, onSelectAgent }) {
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch agents list from the server on component mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/v1/agents/list");
+        if (!response.ok) {
+          throw new Error("Failed to load agents from the server.");
+        }
+        const data = await response.json();
+        setAgents(data);
+      } catch (err) {
+        console.error("Error fetching agents:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
 
   return (
     <aside className="w-72 h-full bg-[#0b111c]/95 border-r border-white/5 flex flex-col p-5 select-none z-40">
@@ -20,7 +40,7 @@ export default function Sidebar({ currentItem = "agents", onNewAgentClick }) {
       />
 
       {/* Agents Section */}
-      <div className="mt-8 flex flex-col">
+      <div className="mt-8 flex flex-col flex-1 min-h-0">
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">
           Agents
         </h3>
@@ -30,36 +50,56 @@ export default function Sidebar({ currentItem = "agents", onNewAgentClick }) {
           icon={Bot} 
           label="New Agent" 
           onClick={onNewAgentClick}
-          className="mb-4" 
+          className="mb-4 shrink-0" 
         />
 
-        {/* Existing Agents List */}
-        <div className="flex flex-col space-y-0.5">
-          {/* Agent 1 */}
-          <div className="flex items-center justify-between w-full py-2 px-3 rounded-lg bg-transparent hover:bg-white/5 transition-all duration-200 group cursor-pointer">
-            <div className="flex items-center text-slate-400 group-hover:text-slate-200 transition-colors">
-              <span className="text-sm font-light">Chef Privado</span>
+        {/* Existing Agents List container */}
+        <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar pr-1">
+          {loading && (
+            <div className="flex items-center gap-2.5 px-3 py-3 text-xs text-slate-500 bg-white/[0.02] rounded-xl border border-white/5">
+              <Loader2 size={14} className="animate-spin text-[#3b82f6]" />
+              <span className="font-light">Loading agents...</span>
             </div>
-            <button 
-              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-md text-slate-500 hover:text-white transition-all"
-              title="Edit Agent"
-            >
-              <Edit2 size={14} />
-            </button>
-          </div>
+          )}
 
-          {/* Agent 2 */}
-          <div className="flex items-center justify-between w-full py-2 px-3 rounded-lg bg-transparent hover:bg-white/5 transition-all duration-200 group cursor-pointer">
-            <div className="flex items-center text-slate-400 group-hover:text-slate-200 transition-colors">
-              <span className="text-sm font-light">Simulador de Exámenes</span>
+          {error && (
+            <div className="px-3 py-3 text-xs text-rose-400 bg-rose-950/20 rounded-xl border border-rose-500/10 font-light">
+              Failed to sync agents.
             </div>
-            <button 
-              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-md text-slate-500 hover:text-white transition-all"
-              title="Edit Agent"
+          )}
+
+          {!loading && !error && agents.length === 0 && (
+            <div className="px-3 py-4 text-xs text-slate-500 font-light bg-white/[0.01] rounded-xl border border-dashed border-white/5 text-center">
+              No custom agents created yet.
+            </div>
+          )}
+
+          {/* Dynamic rendering of database agents with a refined "Quiet Luxury" look */}
+          {!loading && agents.map((agent) => (
+            <div 
+              key={agent.id}
+              onClick={() => onSelectAgent && onSelectAgent(agent)}
+              className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer shadow-sm"
             >
-              <Edit2 size={14} />
-            </button>
-          </div>
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Mini glowing indicator / icon for each agent */}
+                <div className="w-2 h-2 rounded-full bg-[#3b82f6]/40 group-hover:bg-[#3b82f6] group-hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] transition-all shrink-0" />
+                <span className="text-sm font-light text-slate-300 group-hover:text-white transition-colors truncate">
+                  {agent.name}
+                </span>
+              </div>
+
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering parent click event when editing
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all shrink-0 ml-2"
+                title="Edit Agent"
+              >
+                <Edit2 size={13} />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

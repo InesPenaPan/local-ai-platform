@@ -5,8 +5,11 @@ import Sidebar from "./subcomponents/SideBar";
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper"; 
 
-export default function CreateAgentPage() {
+export default function NewAgentPage() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -18,14 +21,52 @@ export default function CreateAgentPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Aseguramos que la temperatura se guarde como número flotante
+    const parsedValue = name === "temperature" ? parseFloat(value) : value;
+    setFormData((prev) => ({ ...prev, [name]: parsedValue }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log("Guardando agente:", formData);
-    setTimeout(() => setLoading(false), 1500);
+    setError(null);
+    setSuccessMessage(false);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/agents/create-agent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Error al crear el agente en el servidor.");
+      }
+
+      const result = await response.json();
+      console.log("Agente guardado con éxito:", result);
+      
+      setSuccessMessage(true);
+      
+      // Opcional: Limpiar formulario tras éxito
+      setFormData({
+        name: "",
+        description: "",
+        systemPrompt: "",
+        model: "llama3.1",
+        collection: "none",
+        temperature: 0.7,
+      });
+
+    } catch (err) {
+      console.error("Error en la petición:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,6 +83,19 @@ export default function CreateAgentPage() {
                 subtitle="Define the identity, instructions, and knowledge base for your custom AI assistant."
               />
             </div>
+
+            {/* Mensajes de éxito o error */}
+            {successMessage && (
+              <div className="mb-6 p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-sm">
+                ¡Agente creado y guardado en la base de datos correctamente!
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-sm">
+                Error: {error}
+              </div>
+            )}
 
             <FormWrapper>
               <form onSubmit={handleSubmit} className="space-y-8">
@@ -178,7 +232,7 @@ export default function CreateAgentPage() {
                 <div className="pt-6 border-t border-white/5 flex justify-end gap-4">
                   <button
                     type="button"
-                    className="px-6 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-all"
+                    className="px-6 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-all cursor-pointer"
                   >
                     Cancel
                   </button>

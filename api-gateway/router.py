@@ -136,7 +136,7 @@ async def proxy_get_collections():
             detail=f"Downstream RAG service error: {exc.response.text}"
         )
 
-@router.post("agents/create-agent")
+@router.post("/agents/create-agent")
 async def proxy_create_agent(payload: dict):
     """
     Forwards a request to create a new agent to the downstream agent-service (port 8003).
@@ -162,7 +162,7 @@ async def proxy_create_agent(payload: dict):
         )
 
 
-@router.get("agents/list")
+@router.get("/agents/list")
 async def proxy_get_agents():
     """
     Fetches the list of all created agents from the downstream agent-service (port 8003).
