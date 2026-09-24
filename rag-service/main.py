@@ -8,7 +8,8 @@ from rag_logic import (
     check_system_health, 
     extract_text_from_file, 
     split_text_into_chunks,
-    store_chunks_in_qdrant
+    store_chunks_in_qdrant,
+    get_all_collections_info
 )
 
 # Initialize FastAPI app with descriptive metadata
@@ -84,3 +85,11 @@ async def upload_document_route(
         # Clean up temporary file from local disk
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
+@app.get("/collections", tags=["Document Processing"])
+def get_collections_route():
+    try:
+        collections = get_all_collections_info()
+        return {"collections": collections}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

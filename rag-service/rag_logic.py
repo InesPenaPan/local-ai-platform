@@ -135,3 +135,69 @@ def store_chunks_in_qdrant(chunks: list[str], filename: str, collection_name: st
     )
     
     return len(points)
+
+def get_all_collections_info() -> list:
+    """
+    Retrieve all Qdrant collections with exhaustive metadata, using 
+    failsafe attribute access (getattr) to prevent crashes on schema changes.
+    """
+    try:
+        response = _qdrant_client.get_collections()
+        collections_data = []
+        
+        for col in response.collections:
+            col_info = _qdrant_client.get_collection(col.name)
+            
+            # 1. Extracción segura de la configuración del tamaño del vector
+            vector_size = 0
+            config = getattr(col_info, "config", None)
+            params = getattr(config, "params", None) if config else None
+            vectors = getattr(params, "vectors", None) if params else None
+            
+            if vectors:
+                if hasattr(vectors, "size"):
+                    vector_size = getattr(vectors, "size", 0)
+                elif isinstance(vectors, dict) and vectors:
+                    # En caso de que se utilicen 'named vectors' (diccionarios)
+                    first_vector = list(vectors.values())[0]
+                    vector_size = getattr(first_vector, "size", 0)
+
+            # 2. Conteo de documentos escaneando el payload
+            unique_filenames = set()
+            try:
+                offset = None
+                while True:
+                    records, next_offset = _qdrant_client.scroll(
+                        collection_name=col.name,
+                        limit=1000,
+                        offset=offset,
+                        with_payload=["filename"],
+                        with_vectors=False
+                    )
+                    
+                    for record in records:
+                        if record.payload and "filename" in record.payload:
+                            unique_filenames.add(record.payload["filename"])
+                    
+                    offset = next_offset
+                    if offset is None:
+                        break
+                        
+                document_count = len(unique_filenames)
+            except Exception:
+                document_count = 0  # Fallback si falla el conteo
+
+            # 3. Construcción del diccionario con lectura segura de atributos
+            collections_data.append({
+                "name": col.name,
+                "status": str(getattr(col_info, "status", "unknown")).replace("CollectionStatus.", ""),
+                # Usa vectors_count, pero si falla, usa points_count, y si falla, 0
+                "vectors_count": getattr(col_info, "vectors_count", getattr(col_info, "points_count", 0)) or 0,
+                "indexed_vectors_count": getattr(col_info, "indexed_vectors_count", 0) or 0,
+                "vector_size": vector_size,
+                "document_count": document_count
+            })
+            
+        return collections_data
+    except Exception as e:
+        raise RuntimeError(f"Failed to fetch detailed collections from Qdrant: {str(e)}")

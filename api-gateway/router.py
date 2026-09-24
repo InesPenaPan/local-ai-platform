@@ -113,3 +113,25 @@ async def proxy_upload_document(
             status_code=exc.response.status_code,
             detail=f"Downstream RAG service error: {exc.response.text}"
         )
+
+@router.get("/rag/collections")
+async def proxy_get_collections():
+    """
+    Fetches the list of all collections and their sizes from the downstream RAG service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get("http://rag-service:8002/collections")
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream RAG service is unreachable."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream RAG service error: {exc.response.text}"
+        )
