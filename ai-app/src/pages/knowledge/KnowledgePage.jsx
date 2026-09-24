@@ -85,7 +85,7 @@ export default function KnowledgePage() {
             className="flex items-center gap-2 px-5 py-3 bg-[#0a0f18]/90 backdrop-blur-md border border-white/10 hover:border-[#DE145C]/50 rounded-xl text-sm font-medium text-slate-200 hover:text-white transition-all shadow-lg duration-300 group cursor-pointer shrink-0"
           >
             <FolderPlus size={18} strokeWidth={2} className="text-[#DE145C] group-hover:scale-110 transition-transform" />
-            <span>New Collection</span>
+            <span>Upload Documents</span>
           </button>
         </div>
 

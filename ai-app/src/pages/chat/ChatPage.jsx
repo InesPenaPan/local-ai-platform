@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, ChevronDown, Sparkles } from "lucide-react";
 
 import Sidebar from "./subcomponents/SideBar";
+import NewAgentPage from "./NewAgentPage"; 
 
 export default function ChatPage() {
   const [currentTab, setCurrentTab] = useState("chat");
@@ -55,6 +56,11 @@ export default function ChatPage() {
     }
   };
 
+  // CONDITIONAL RENDER: Show Agent Creation Form
+  if (currentTab === "create-agent") {
+    return <NewAgentPage />;
+  }
+
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
 
@@ -62,7 +68,10 @@ export default function ChatPage() {
       <div className="flex flex-1 h-full overflow-hidden">
         
         {/* Sidebar */}
-        <Sidebar currentItem="agents" />
+        <Sidebar 
+          currentItem="agents" 
+          onNewAgentClick={() => setCurrentTab("create-agent")} // FUNCTION PASSED TO SIDEBAR
+        />
 
         {/* Main Area Chat */}
         <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
@@ -106,9 +115,7 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[80%] px-6 py-4 text-[15px] leading-relaxed transition-all duration-300 ${
                       msg.role === "user"
-                        // User Message: Magenta Tint
                         ? "bg-[#14080c] border border-[#DE145C]/30 text-slate-200 shadow-[0_4px_20px_rgba(222,20,92,0.1)] rounded-2xl rounded-tr-sm"
-                        // AI Message: Blue Tint
                         : "bg-[#080d17] border border-[#3b82f6]/30 text-slate-200 shadow-[0_4px_20px_rgba(59,130,246,0.1)] rounded-2xl rounded-tl-sm"
                     }`}
                   >
