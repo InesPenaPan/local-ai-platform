@@ -39,7 +39,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
       formData.append("file", selectedFile);
 
       // 2. Send HTTP POST request to the Ingestion Service running on port 8001
-      const res = await fetch("http://localhost:8000/rag/upload-document", {
+      const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
         method: "POST",
         body: formData,
       });

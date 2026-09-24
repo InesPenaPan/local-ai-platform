@@ -6,11 +6,26 @@ import httpx
 from config import settings
 from router import router as api_router
 
-# Initialize FastAPI application with minimal configuration and lifespan
+# Shared HTTP connection pool for asynchronous requests
+http_client: httpx.AsyncClient = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manages the lifecycle of persistent resources across the application.
+    Initializes a shared AsyncClient pool on startup and ensures clean disposal on shutdown.
+    """
+    global http_client
+    http_client = httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS)
+    yield
+    await http_client.aclose()
+
+# Initialize FastAPI application with lifespan
 app = FastAPI(
     title="Local AI API Gateway",
     description="Asynchronous entry point and reverse proxy for local inference and RAG services",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Cross-Origin Resource Sharing (CORS) Middleware configuration
