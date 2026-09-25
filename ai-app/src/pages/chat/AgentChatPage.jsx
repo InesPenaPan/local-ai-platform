@@ -1,24 +1,61 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot } from "lucide-react";
 
 import Sidebar from "./subcomponents/SideBar";
+import Message from "./subcomponents/Message";
 
-export default function AgentChatPage() {
-  // Static agent data used for the frontend prototype
-  const agent = {
-    name: "Frontend Tester Bot",
-    description:
-      "I am a static testing assistant. I am only used to prototype the interface without connecting to an external service.",
-    model: "llama3.1",
-  };
-
+export default function AgentChatPage({ agent: selectedAgent }) {
+  const [agent, setAgent] = useState(selectedAgent || null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agentLoading, setAgentLoading] = useState(true);
+  const [agentError, setAgentError] = useState(null);
 
   const messagesEndRef = useRef(null);
 
-  // Scroll to the bottom whenever messages or loading state changes
+  // Load agent information
+  useEffect(() => {
+    if (!selectedAgent?.name) {
+      setAgentLoading(false);
+      setAgentError("No se ha seleccionado ningún agente.");
+      return;
+    }
+
+    const fetchAgent = async () => {
+      try {
+        setAgentLoading(true);
+        setAgentError(null);
+
+        const response = await fetch(
+          `http://localhost:8000/api/v1/agent/agents/${encodeURIComponent(
+            selectedAgent.name
+          )}`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `No se pudo obtener el agente (${response.status})`
+          );
+        }
+
+        const data = await response.json();
+
+        setAgent(data);
+      } catch (error) {
+        console.error("Error loading agent:", error);
+        setAgentError(
+          "No se pudo cargar la información del agente."
+        );
+      } finally {
+        setAgentLoading(false);
+      }
+    };
+
+    fetchAgent();
+  }, [selectedAgent]);
+
+  // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -29,28 +66,30 @@ export default function AgentChatPage() {
     scrollToBottom();
   }, [messages, loading]);
 
-  // Simulate sending a message to the agent
-  const sendMessage = (e) => {
+  // Send message
+  const sendMessage = async (e) => {
     e.preventDefault();
 
     const trimmed = input.trim();
 
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || !agent) return;
 
-    // Add the user's message to the conversation
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "user",
-        content: trimmed,
-      },
-    ]);
+    const userMessage = {
+      role: "user",
+      content: trimmed,
+    };
 
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
-    // Simulate an agent response
-    setTimeout(() => {
+    try {
+      // TODO:
+      // Aquí posteriormente puedes conectar el endpoint
+      // específico para ejecutar este agente.
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setMessages((prev) => [
         ...prev,
         {
@@ -58,14 +97,57 @@ export default function AgentChatPage() {
           content: `Response from ${agent.name}. I received your message: "${trimmed}"`,
         },
       ]);
+    } catch (error) {
+      console.error("Error sending message:", error);
 
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "No se pudo obtener una respuesta del agente.",
+        },
+      ]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
+
+  // Loading agent
+  if (agentLoading) {
+    return (
+      <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
+          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+          <span className="ml-2">
+            Cargando agente...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Agent loading error
+  if (agentError || !agent) {
+    return (
+      <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
+        <div className="text-center">
+          <p className="text-red-400 mb-2">
+            {agentError || "Agente no encontrado."}
+          </p>
+
+          <p className="text-sm text-slate-500">
+            Comprueba que el agente existe y que el API Gateway está disponible.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-      {/* Main wrapper */}
       <div className="flex flex-1 h-full overflow-hidden">
 
         {/* Sidebar */}
@@ -77,10 +159,12 @@ export default function AgentChatPage() {
           {/* Agent information header */}
           <header className="shrink-0 px-6 pt-6 relative z-20">
             <div className="max-w-4xl mx-auto">
+
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#080d17]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
 
                 {/* Decorative background glow */}
                 <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#3b82f6]/15 blur-[50px] rounded-full pointer-events-none" />
+
                 <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#DE145C]/15 blur-[50px] rounded-full pointer-events-none" />
 
                 {/* Agent information */}
@@ -113,7 +197,6 @@ export default function AgentChatPage() {
 
                   </div>
                 </div>
-
               </div>
             </div>
           </header>
@@ -127,6 +210,7 @@ export default function AgentChatPage() {
 
                 <div className="relative flex items-center justify-center">
                   <div className="absolute w-32 h-32 bg-[#3b82f6]/40 blur-[35px] -translate-x-6 rounded-full" />
+
                   <div className="absolute w-32 h-32 bg-[#DE145C]/40 blur-[35px] translate-x-6 rounded-full" />
 
                   <Bot
@@ -154,63 +238,39 @@ export default function AgentChatPage() {
 
               {/* Message list */}
               {messages.map((msg, idx) => (
-                <div
+                <Message
                   key={idx}
-                  className={`flex gap-4 ${
-                    msg.role === "user"
-                      ? "justify-end"
-                      : "justify-start"
-                  } group`}
-                >
-
-                  {/* Assistant avatar */}
-                  {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-xl bg-[#2563eb] border border-blue-400/30 flex items-center justify-center text-white shrink-0 shadow-[0_4px_15px_rgba(59,130,246,0.25)] mt-1">
-                      <Bot size={20} strokeWidth={2} />
-                    </div>
-                  )}
-
-                  {/* Message content */}
-                  <div
-                    className={`max-w-[80%] px-6 py-4 text-[15px] leading-relaxed transition-all duration-300 ${
-                      msg.role === "user"
-                        ? "bg-[#14080c] border border-[#DE145C]/30 text-slate-200 shadow-[0_4px_20px_rgba(222,20,92,0.1)] rounded-2xl rounded-tr-sm"
-                        : "bg-[#080d17] border border-[#3b82f6]/30 text-slate-200 shadow-[0_4px_20px_rgba(59,130,246,0.1)] rounded-2xl rounded-tl-sm"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap tracking-wide font-light">
-                      {msg.content}
-                    </p>
-                  </div>
-
-                  {/* User avatar */}
-                  {msg.role === "user" && (
-                    <div className="w-10 h-10 rounded-xl bg-[#DE145C] border border-pink-400/30 flex items-center justify-center text-white shrink-0 mt-1 shadow-[0_4px_15px_rgba(222,20,92,0.25)]">
-                      <User size={20} strokeWidth={2.5} />
-                    </div>
-                  )}
-
-                </div>
+                  message={msg}
+                />
               ))}
 
               {/* Loading indicator */}
               {loading && (
                 <div className="flex gap-4 justify-start animate-fade-in">
 
-                  <div className="w-10 h-10 rounded-xl bg-[#2563eb] border border-blue-400/30 flex items-center justify-center text-white shrink-0 mt-1 shadow-[0_4px_15px_rgba(59,130,246,0.25)]">
-                    <Bot size={20} strokeWidth={2} />
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0 mt-1">
+                    <Bot
+                      size={22}
+                      strokeWidth={1.8}
+                      className="text-blue-300"
+                    />
                   </div>
 
                   <div className="bg-[#080d17] border border-[#3b82f6]/30 shadow-[0_4px_20px_rgba(59,130,246,0.1)] px-6 py-5 rounded-2xl rounded-tl-sm flex items-center gap-2">
                     <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce [animation-delay:-0.3s]" />
+
                     <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce [animation-delay:-0.15s]" />
+
                     <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce" />
                   </div>
 
                 </div>
               )}
 
-              <div ref={messagesEndRef} className="h-6" />
+              <div
+                ref={messagesEndRef}
+                className="h-6"
+              />
 
             </div>
           </div>
@@ -250,11 +310,11 @@ export default function AgentChatPage() {
                     }
                   />
                 </button>
-
               </div>
-            </form>
 
+            </form>
           </footer>
+
         </main>
       </div>
     </div>

@@ -12,3 +12,7 @@ def create_new_agent(db: Session, agent: AgentCreate):
 def get_all_agents(db: Session):
     from main import AgentDB
     return db.query(AgentDB).all()
+
+def get_agent_by_name(db: Session, name: str):
+    from main import AgentDB
+    return db.query(AgentDB).filter(AgentDB.name == name).first()

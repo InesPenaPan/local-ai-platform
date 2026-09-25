@@ -183,3 +183,36 @@ async def proxy_get_agents():
             status_code=exc.response.status_code,
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
+
+@router.get("/agent/agents/{name}")
+async def proxy_get_agent(name: str
+):
+    """
+    Fetches a specific agent by name from the downstream agent-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"http://agent-service:8003/agent/{name}"
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream agent-service is unreachable (port 8003 unavailable)."
+        )
+
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The agent-service took too long to respond."
+        )
+
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream agent-service error: {exc.response.text}"
+        )
+

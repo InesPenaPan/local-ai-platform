@@ -96,8 +96,8 @@ export default function ChatPage() {
 
   // Show Agent Chat
   if (currentTab === "agent-chat") {
-    return <AgentChatPage />;
-  }
+  return <AgentChatPage agent={selectedAgent} />;
+}
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">

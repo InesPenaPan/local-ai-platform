@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
@@ -52,3 +52,12 @@ def create_agent(agent: AgentCreate, db: Session = Depends(get_db)):
 @app.get("/list", response_model=list[AgentResponse])
 def list_agents(db: Session = Depends(get_db)):
     return agent_logic.get_all_agents(db)
+
+@app.get("/agent/{name}", response_model=AgentResponse)
+def get_agent(name: str, db: Session = Depends(get_db)):
+    agent = agent_logic.get_agent_by_name(db, name)
+
+    if agent is None:
+        raise HTTPException(status_code=404, detail=f"Agente con el nombre '{name}' no encontrado")
+
+    return agent
