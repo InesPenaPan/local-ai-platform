@@ -4,7 +4,7 @@ export default function FormWrapper({ children }) {
       {/* Decorative top gradient */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#3b82f6] to-[#DE145C]"></div>
       
-      {/* Todo lo que pongas dentro del wrapper se renderizará aquí */}
+      {/* Everything placed inside the wrapper will be rendered here */}
       {children}
     </div>
   );

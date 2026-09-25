@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, Bot, Compass, Edit2, Loader2, Sparkles } from "lucide-react";
+import { MessageSquarePlus, Bot, Edit2, Loader2 } from "lucide-react";
 
 import NewButton from "./NewButton"; 
 
@@ -53,7 +53,7 @@ export default function Sidebar({ currentItem = "agents", onNewAgentClick, onSel
           className="mb-4 shrink-0" 
         />
 
-        {/* Existing Agents List container */}
+        {/* Agents List container */}
         <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar pr-1">
           {loading && (
             <div className="flex items-center gap-2.5 px-3 py-3 text-xs text-slate-500 bg-white/[0.02] rounded-xl border border-white/5">
@@ -74,7 +74,7 @@ export default function Sidebar({ currentItem = "agents", onNewAgentClick, onSel
             </div>
           )}
 
-          {/* Dynamic rendering of database agents with a refined "Quiet Luxury" look */}
+          {/* Dynamic rendering of database agents*/}
           {!loading && agents.map((agent) => (
             <div 
               key={agent.id}
@@ -82,7 +82,6 @@ export default function Sidebar({ currentItem = "agents", onNewAgentClick, onSel
               className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer shadow-sm"
             >
               <div className="flex items-center gap-3 min-w-0">
-                {/* Mini glowing indicator / icon for each agent */}
                 <div className="w-2 h-2 rounded-full bg-[#3b82f6]/40 group-hover:bg-[#3b82f6] group-hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] transition-all shrink-0" />
                 <span className="text-sm font-light text-slate-300 group-hover:text-white transition-colors truncate">
                   {agent.name}

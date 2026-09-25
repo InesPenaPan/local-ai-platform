@@ -3,7 +3,6 @@ import { MessageSquare, Database, Settings, Sparkles } from "lucide-react";
 import logo from "../../assets/eva.png";
 
 export default function Header({ currentTab, onSelectTab }) {
-  // Define navigation items with their respective icons and identifiers
   const navItems = [
     { id: "chat", label: "Chat", icon: MessageSquare },
     { id: "rag", label: "Knowledge / RAG", icon: Database },
