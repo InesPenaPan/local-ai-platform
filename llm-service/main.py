@@ -7,13 +7,14 @@ app = FastAPI(title="LLM Service API")
 @app.post("/generate", response_model=ChatResponse)
 def generate_response(request: ChatRequest):
     """
-    Endpoint that receives a prompt and model selection,
-    delegates the generation to the LLM handler, and returns the result.
+    Endpoint that receives a user prompt, model selection, and an optional system prompt,
+    delegates the generation task to the local LLM handler, and returns the result.
     """
     try:
         generated_text = generate_from_ollama(
             model_name=request.model, 
-            prompt=request.message
+            prompt=request.message,
+            system_prompt=request.system_prompt
         )
         
         return ChatResponse(reply=generated_text)

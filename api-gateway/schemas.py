@@ -1,8 +1,11 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class ChatRequest(BaseModel):
     message: str 
     model: str 
+    system_prompt: Optional[str] = None
+    
 class ChatResponse(BaseModel):
     reply: str
     target_service: str = "llm-service"

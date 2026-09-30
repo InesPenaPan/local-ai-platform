@@ -14,11 +14,11 @@ export default function AgentChatPage({ agent: selectedAgent }) {
 
   const messagesEndRef = useRef(null);
 
-  // Load agent information
+  // Load agent information from the API Gateway
   useEffect(() => {
     if (!selectedAgent?.name) {
       setAgentLoading(false);
-      setAgentError("No se ha seleccionado ningún agente.");
+      setAgentError("No agent has been selected.");
       return;
     }
 
@@ -35,7 +35,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
 
         if (!response.ok) {
           throw new Error(
-            `No se pudo obtener el agente (${response.status})`
+            `Could not retrieve agent (${response.status})`
           );
         }
 
@@ -44,9 +44,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
         setAgent(data);
       } catch (error) {
         console.error("Error loading agent:", error);
-        setAgentError(
-          "No se pudo cargar la información del agente."
-        );
+        setAgentError("Could not load agent information.");
       } finally {
         setAgentLoading(false);
       }
@@ -55,7 +53,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     fetchAgent();
   }, [selectedAgent]);
 
-  // Scroll to bottom
+  // Scroll to the bottom whenever messages or loading state changes
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -66,7 +64,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     scrollToBottom();
   }, [messages, loading]);
 
-  // Send message
+  // Send a message to the LLM Gateway using the selected agent configuration
   const sendMessage = async (e) => {
     e.preventDefault();
 
@@ -84,28 +82,50 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     setLoading(true);
 
     try {
-      // TODO:
-      // Aquí posteriormente puedes conectar el endpoint
-      // específico para ejecutar este agente.
+      // Send the user's message to the same LLM endpoint used by ChatPage.
+      // The agent's model and system prompt are included in the request.
+      const response = await fetch(
+        "http://localhost:8000/api/v1/llm/generate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: trimmed,
+            model: agent.model,
+            system_prompt: agent.systemPrompt,
+          }),
+        }
+      );
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Handle unsuccessful responses from the API Gateway
+      if (!response.ok) {
+        throw new Error(
+          `Gateway returned status: ${response.status}`
+        );
+      }
 
+      // Parse the LLM service response
+      const data = await response.json();
+
+      // Add the assistant response to the chat
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `Response from ${agent.name}. I received your message: "${trimmed}"`,
+          content: data.reply,
         },
       ]);
     } catch (error) {
       console.error("Error sending message:", error);
 
+      // Show a user-friendly error message in the chat
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "No se pudo obtener una respuesta del agente.",
+          content: "Could not get a response from the agent.",
         },
       ]);
     } finally {
@@ -113,7 +133,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     }
   };
 
-  // Loading agent
+  // Show loading state while retrieving the agent
   if (agentLoading) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
@@ -122,24 +142,24 @@ export default function AgentChatPage({ agent: selectedAgent }) {
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
           <span className="ml-2">
-            Cargando agente...
+            Loading agent...
           </span>
         </div>
       </div>
     );
   }
 
-  // Agent loading error
+  // Show an error state if the agent could not be loaded
   if (agentError || !agent) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
         <div className="text-center">
           <p className="text-red-400 mb-2">
-            {agentError || "Agente no encontrado."}
+            {agentError || "Agent not found."}
           </p>
 
           <p className="text-sm text-slate-500">
-            Comprueba que el agente existe y que el API Gateway está disponible.
+            Make sure the agent exists and that the API Gateway is available.
           </p>
         </div>
       </div>

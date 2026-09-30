@@ -1,12 +1,15 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class ChatRequest(BaseModel):
     """
     A model representing the incoming payload from the API Gateway or frontend.
-    It contains the user's prompt and the specific LLM model to be used for generation.
+    It contains the user's prompt, the specific LLM model to be used for generation, 
+    and an optional system prompt to define the agent's behavior and instructions.
     """
     message: str
     model: str
+    system_prompt: Optional[str] = None
 
 class ChatResponse(BaseModel):
     """
