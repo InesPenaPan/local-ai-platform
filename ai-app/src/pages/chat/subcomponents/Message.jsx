@@ -1,14 +1,19 @@
 import { Bot, User } from "lucide-react";
 
+// ============================================================================
+// Message
+// ----------------------------------------------------------------------------
+// Renders an individual message within the chat interface. The layout, 
+// styling, and avatar rendered depend dynamically on whether the message 
+// belongs to the user or if it is the chat (assistant) responding.
+// ============================================================================
+
 export default function Message({ message }) {
   const isUser = message.role === "user";
 
   return (
-    <div
-      className={`flex gap-4 ${
-        isUser ? "justify-end" : "justify-start"
-      } group`}
-    >
+    <div className={`flex gap-4 ${ isUser ? "justify-end" : "justify-start"} group`}>
+
       {/* Assistant Avatar */}
       {!isUser && (
         <div className="w-10 h-10 rounded-xl bg-[#2563eb] border border-blue-400/30 flex items-center justify-center text-white shrink-0 shadow-[0_4px_15px_rgba(59,130,246,0.25)] mt-1">

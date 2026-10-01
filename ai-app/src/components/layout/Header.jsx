@@ -1,6 +1,4 @@
-import { MessageSquare, Database, Settings, Sparkles } from "lucide-react";
-
-import logo from "../../assets/eva.png";
+import { MessageSquare, Database, Settings} from "lucide-react";
 
 export default function Header({ currentTab, onSelectTab }) {
   const navItems = [

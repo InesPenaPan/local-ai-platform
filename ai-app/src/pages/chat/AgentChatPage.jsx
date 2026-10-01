@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot } from "lucide-react";
+import { Bot } from "lucide-react";
 
 import Sidebar from "./subcomponents/SideBar";
 import Message from "./subcomponents/Message";
+import PromptInput from "./subcomponents/PromptInput";
 
 export default function AgentChatPage({ agent: selectedAgent }) {
   const [agent, setAgent] = useState(selectedAgent || null);
@@ -69,64 +70,69 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     e.preventDefault();
 
     const trimmed = input.trim();
-
     if (!trimmed || loading || !agent) return;
 
-    const userMessage = {
-      role: "user",
-      content: trimmed,
-    };
-
+    const userMessage = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      // Send the user's message to the same LLM endpoint used by ChatPage.
-      // The agent's model and system prompt are included in the request.
-      const response = await fetch(
-        "http://localhost:8000/api/v1/llm/generate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: trimmed,
-            model: agent.model,
-            system_prompt: agent.systemPrompt,
-          }),
-        }
-      );
+      // 1. Inicializar el prompt del sistema base
+      let finalSystemPrompt = agent.systemPrompt || "";
 
-      // Handle unsuccessful responses from the API Gateway
-      if (!response.ok) {
-        throw new Error(
-          `Gateway returned status: ${response.status}`
-        );
+      // 2. Conexión RAG: Buscar contexto si el agente tiene una colección asignada
+      if (agent.collection && agent.collection !== "none") {
+        try {
+          const searchRes = await fetch("http://localhost:8000/api/v1/rag/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: trimmed,
+              collection_name: agent.collection,
+              top_k: 3
+            })
+          });
+
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            
+            // 3. Inyectar los fragmentos recuperados en el prompt
+            if (searchData.context) {
+              finalSystemPrompt += `\n\n### INFORMACIÓN DE CONTEXTO ###\nUtiliza la siguiente información para responder a la pregunta. Si la respuesta no está en el contexto, indícalo claramente.\n\n${searchData.context}`;
+            }
+          }
+        } catch (error) {
+          console.error("Error recuperando contexto del RAG:", error);
+        }
       }
 
-      // Parse the LLM service response
+      // 4. Enviar el mensaje final al Gateway LLM usando el prompt enriquecido
+      const response = await fetch("http://localhost:8000/api/v1/llm/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: trimmed,
+          model: agent.model,
+          system_prompt: finalSystemPrompt, // <-- Usamos el prompt enriquecido aquí
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gateway returned status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      // Add the assistant response to the chat
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-        },
+        { role: "assistant", content: data.reply },
       ]);
     } catch (error) {
       console.error("Error sending message:", error);
-
-      // Show a user-friendly error message in the chat
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Could not get a response from the agent.",
-        },
+        { role: "assistant", content: "Could not get a response from the agent." },
       ]);
     } finally {
       setLoading(false);
@@ -296,44 +302,14 @@ export default function AgentChatPage({ agent: selectedAgent }) {
           </div>
 
           {/* Bottom input area */}
-          <footer className="shrink-0 px-6 py-6 bg-gradient-to-t from-[#04070c] via-[#04070c]/95 to-transparent relative z-30">
-
-            <form
-              onSubmit={sendMessage}
-              className="max-w-4xl mx-auto flex gap-3 relative"
-            >
-
-              {/* Text input */}
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={`Message ${agent.name}...`}
-                  disabled={loading}
-                  className="w-full bg-[#0a0f18]/90 backdrop-blur-md border border-white/10 hover:border-white/20 focus:border-[#DE145C]/50 rounded-xl pl-5 pr-14 py-3.5 text-[15px] text-white placeholder-slate-500 focus:outline-none transition-all shadow-lg disabled:opacity-50 font-light"
-                />
-
-                {/* Send button */}
-                <button
-                  type="submit"
-                  disabled={loading || !input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-transparent text-slate-500 hover:text-white hover:bg-gradient-to-br hover:from-[#3b82f6] hover:to-[#DE145C] hover:shadow-[0_4px_15px_rgba(222,20,92,0.3)] disabled:bg-transparent disabled:text-slate-700 transition-all duration-300"
-                >
-                  <Send
-                    size={18}
-                    strokeWidth={2}
-                    className={
-                      input.trim() && !loading
-                        ? "text-[#DE145C]"
-                        : ""
-                    }
-                  />
-                </button>
-              </div>
-
-            </form>
-          </footer>
+          <PromptInput
+            input={input}
+            setInput={setInput}
+            loading={loading}
+            onSubmit={sendMessage}
+            placeholder={`Message ${agent.name}...`}
+            hideModelSelector
+          />
 
         </main>
       </div>

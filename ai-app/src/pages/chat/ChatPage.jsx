@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import {
-  Send,
   Bot,
-  ChevronDown,
   MessageSquare,
 } from "lucide-react";
 
@@ -11,10 +9,11 @@ import ChatEmptyState from "./subcomponents/ChatEmptyState";
 import Message from "./subcomponents/Message";
 import NewAgentPage from "./NewAgentPage";
 import AgentChatPage from "./AgentChatPage";
+import PromptInput from "./subcomponents/PromptInput";
 
 export default function ChatPage() {
   const [currentTab, setCurrentTab] = useState("chat");
-
+  
   // Currently selected agent
   const [selectedAgent, setSelectedAgent] = useState(null);
 
@@ -204,89 +203,22 @@ export default function ChatPage() {
                 ref={messagesEndRef}
                 className="h-6"
               />
+
             </div>
           </div>
 
           {/* Input Area */}
-          <footer className="shrink-0 px-6 py-6 bg-gradient-to-t from-[#04070c] via-[#04070c]/95 to-transparent relative z-30">
+          <PromptInput
+            input={input}
+            setInput={setInput}
+            loading={loading}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            onSubmit={sendMessage}
+          />
 
-            <form
-              onSubmit={sendMessage}
-              className="max-w-4xl mx-auto flex gap-3 relative"
-            >
-
-              {/* Model Selector */}
-              <div className="relative shrink-0 w-40">
-
-                <select
-                  value={selectedModel}
-                  onChange={(e) =>
-                    setSelectedModel(e.target.value)
-                  }
-                  disabled={loading}
-                  className="w-full h-full bg-[#0a0f18]/90 backdrop-blur-md border border-white/10 hover:border-white/20 focus:border-[#3b82f6]/50 rounded-xl pl-4 pr-10 py-3.5 text-[14px] font-medium text-slate-200 focus:outline-none transition-all shadow-lg appearance-none cursor-pointer disabled:opacity-50"
-                >
-
-                  <option
-                    value="llama3.1"
-                    className="bg-[#0b111c]"
-                  >
-                    Llama 3.1
-                  </option>
-
-                  <option
-                    value="mistral"
-                    className="bg-[#0b111c]"
-                  >
-                    Mistral
-                  </option>
-
-                </select>
-
-                <ChevronDown
-                  size={16}
-                  strokeWidth={2}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                />
-              </div>
-
-              {/* Text Input */}
-              <div className="relative flex-1">
-
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) =>
-                    setInput(e.target.value)
-                  }
-                  placeholder="Message Local AI..."
-                  disabled={loading}
-                  className="w-full bg-[#0a0f18]/90 backdrop-blur-md border border-white/10 hover:border-white/20 focus:border-[#DE145C]/50 rounded-xl pl-5 pr-14 py-3.5 text-[15px] text-white placeholder-slate-500 focus:outline-none transition-all shadow-lg disabled:opacity-50 font-light"
-                />
-
-                <button
-                  type="submit"
-                  disabled={loading || !input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-transparent text-slate-500 hover:text-white hover:bg-gradient-to-br hover:from-[#3b82f6] hover:to-[#DE145C] hover:shadow-[0_4px_15px_rgba(222,20,92,0.3)] disabled:bg-transparent disabled:text-slate-700 transition-all duration-300"
-                >
-
-                  <Send
-                    size={18}
-                    strokeWidth={2}
-                    className={
-                      input.trim() && !loading
-                        ? "text-[#DE145C]"
-                        : ""
-                    }
-                  />
-
-                </button>
-              </div>
-            </form>
-          </footer>
         </main>
       </div>
     </div>
   );
 }
-

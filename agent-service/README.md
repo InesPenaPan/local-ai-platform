@@ -14,6 +14,7 @@ Before running this individual microservice locally, ensure you have the followi
 ## 🚀 Running the App
 
 In your project terminal (with the `venv` activated), start the Uvicorn server on port 8001:
+
 ```PowerShell
 python -m venv venv
 .\venv\Scripts\activate
@@ -65,6 +66,13 @@ This endpoint retrieves a specific agent's detailed configuration by searching f
   "id": 1
 }
 ```
+## 🗄️ Inspecting the Database
+
+To quickly view all saved agents and their configurations (such as their exact `collection` names) in a structured JSON format without installing external SQLite clients, run the following command in your terminal. Ensure you are inside the `agent-service` directory:
+
+```PowerShell
+python -c "import sqlite3, json; c=sqlite3.connect('agents.db'); c.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in c.execute('SELECT * FROM agents')], indent=2, ensure_ascii=False))"
+``
 
 ## 📁 Project Structure
 

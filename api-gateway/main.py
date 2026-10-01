@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     Initializes a shared AsyncClient pool on startup and ensures clean disposal on shutdown.
     """
     global http_client
-    http_client = httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS)
+    http_client = httpx.AsyncClient(timeout=9000.0)
     yield
     await http_client.aclose()
 

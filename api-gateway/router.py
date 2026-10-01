@@ -1,7 +1,14 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 import httpx
 
-from schemas import ChatRequest, ChatResponse, TextEmbeddingRequest, EmbeddingResponse
+from schemas import (
+    ChatRequest, 
+    ChatResponse, 
+    TextEmbeddingRequest, 
+    EmbeddingResponse,
+    SearchRequest,
+    SearchResponse
+)
 
 router = APIRouter(prefix="/api/v1", tags=["AI Services Gateway"])
 
@@ -114,6 +121,7 @@ async def proxy_upload_document(
             detail=f"Downstream RAG service error: {exc.response.text}"
         )
 
+
 @router.get("/rag/collections")
 async def proxy_get_collections():
     """
@@ -135,6 +143,38 @@ async def proxy_get_collections():
             status_code=exc.response.status_code,
             detail=f"Downstream RAG service error: {exc.response.text}"
         )
+
+
+@router.post("/rag/search", response_model=SearchResponse)
+async def proxy_search_context(payload: SearchRequest):
+    """
+    Forwards search queries to the downstream RAG service to retrieve relevant context.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "http://rag-service:8002/search",
+                json=payload.model_dump()
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream RAG service is unreachable (port 8002 unavailable)."
+        )
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The RAG service took too long to search the vector database."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream RAG service error: {exc.response.text}"
+        )
+
 
 @router.post("/agents/create-agent")
 async def proxy_create_agent(payload: dict):
@@ -184,9 +224,9 @@ async def proxy_get_agents():
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
 
+
 @router.get("/agent/agents/{name}")
-async def proxy_get_agent(name: str
-):
+async def proxy_get_agent(name: str):
     """
     Fetches a specific agent by name from the downstream agent-service.
     """
@@ -203,16 +243,13 @@ async def proxy_get_agent(name: str
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Downstream agent-service is unreachable (port 8003 unavailable)."
         )
-
     except httpx.ReadTimeout:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="The agent-service took too long to respond."
         )
-
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code,
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
-

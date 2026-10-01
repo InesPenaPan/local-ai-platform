@@ -1,3 +1,11 @@
+// ============================================================================
+// ChatEmptyState
+// ----------------------------------------------------------------------------
+// Displays the initial empty state of the chat interface, including a
+// customizable icon, decorative glow effects, a title, and an optional
+// subtitle shown before the user starts a conversation.
+// ============================================================================
+
 export default function ChatEmptyState({icon: Icon, title, subtitle,}) {
   return (
     <div className="flex flex-col items-center justify-center animate-fade-in pointer-events-none">

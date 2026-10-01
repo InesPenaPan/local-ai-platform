@@ -1,3 +1,11 @@
+// ============================================================================
+// NewButton
+// ----------------------------------------------------------------------------
+// A reusable button component primarily used within the sidebar to trigger
+// the creation of new entities, such as starting a "New Chat" or creating a 
+// "New Agent".
+// ============================================================================
+
 export default function NewButton({ icon: Icon, label, onClick, className = "" }) {
   return (
     <button 

@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
-import {
-  MessageSquarePlus,
-  Bot,
-  Edit2,
-  Loader2,
-} from "lucide-react";
+import { MessageSquarePlus, Bot, Edit2, Loader2 } from "lucide-react";
 
 import NewButton from "./NewButton";
 
-export default function Sidebar({
-  currentItem = "agents",
-  onNewAgentClick,
-  onSelectAgent,
-}) {
+// ============================================================================
+// Sidebar
+// ----------------------------------------------------------------------------
+// Displays the application's main navigation sidebar, including conversation
+// actions, the custom agents section, agent loading and error states, and the
+// list of available agents with options to select or edit them.
+// ============================================================================
+
+export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,8 +34,6 @@ export default function Sidebar({
         }
 
         const data = await response.json();
-
-        // Make sure we always store an array
         setAgents(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching agents:", err);
@@ -121,10 +118,8 @@ export default function Sidebar({
               >
                 <div className="flex items-center gap-3 min-w-0">
 
-                  {/* Status Dot */}
                   <div className="w-2 h-2 rounded-full bg-[#3b82f6]/40 group-hover:bg-[#3b82f6] group-hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] transition-all shrink-0" />
 
-                  {/* Agent Name */}
                   <span className="text-sm font-light text-slate-300 group-hover:text-white transition-colors truncate">
                     {agent.name}
                   </span>

@@ -9,3 +9,14 @@ class EmbeddingResponse(BaseModel):
     text: str
     dimension: int
     preview: list[float]
+
+class SearchRequest(BaseModel):
+    """Payload schema for querying the vector database for relevant context."""
+    query: str = Field(..., description="The user's message or search query")
+    collection_name: str = Field(..., description="The target collection to search for context")
+    top_k: int = Field(3, description="Number of text chunks to retrieve")
+
+class SearchResponse(BaseModel):
+    """Response schema containing the retrieved context and its sources."""
+    context: str
+    source_documents: list[str]
