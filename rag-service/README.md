@@ -158,8 +158,8 @@ rag-service/
 │
 ├── main.py              # FastAPI application controller and HTTP routes
 ├── models.py            # Pydantic schemas (Contracts and DTOs)
-├── rag_logic.py         # Core logic (Ollama embeddings, Qdrant, and PDF/Word parsing)[cite: 4]
+├── rag_logic.py         # Core logic (Ollama embeddings, Qdrant, and PDF/Word parsing)
 ├── Dockerfile           # Docker containerization configuration
-├── requirements.txt     # Project dependencies (FastAPI, LangChain, Qdrant, pypdf, python-docx)[cite: 5]
-└── venv/                # Isolated Python virtual environment (ignored in git)[cite: 1]
+├── requirements.txt     # Project dependencies (FastAPI, LangChain, Qdrant, pypdf, python-docx)
+└── store_logic.py       # Embeddings, document parsing, chunking, Qdrant storage, collection management, and health checks
 ```

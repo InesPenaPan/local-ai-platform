@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, Bot, Edit2, Loader2 } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Bot,
+  Edit2,
+  Loader2,
+} from "lucide-react";
 
 import NewButton from "./NewButton";
 
 // ============================================================================
 // Sidebar
 // ----------------------------------------------------------------------------
-// Displays the application's main navigation sidebar, including conversation
-// actions, the custom agents section, agent loading and error states, and the
-// list of available agents with options to select or edit them.
+// Displays the application's conversation actions and available agents.
+// Main application navigation is handled outside the sidebar.
 // ============================================================================
 
-export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
+export default function Sidebar({
+  onNewConversation,
+  onNewAgentClick,
+  onSelectAgent,
+}) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,9 +42,11 @@ export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
         }
 
         const data = await response.json();
+
         setAgents(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching agents:", err);
+
         setError(err.message);
         setAgents([]);
       } finally {
@@ -54,6 +64,7 @@ export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
       <NewButton
         icon={MessageSquarePlus}
         label="New Conversation"
+        onClick={onNewConversation}
         className="mt-10"
       />
 
@@ -73,7 +84,7 @@ export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
         />
 
         {/* Agents List */}
-        <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar pr-1">
+        <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-220px)] custom-scrollbar pr-1">
 
           {/* Loading */}
           {loading && (
@@ -109,11 +120,7 @@ export default function Sidebar({ onNewAgentClick, onSelectAgent, }) {
             agents.map((agent) => (
               <div
                 key={agent.id ?? agent.name}
-                onClick={() => {
-                  if (onSelectAgent) {
-                    onSelectAgent(agent);
-                  }
-                }}
+                onClick={() => onSelectAgent?.(agent)}
                 className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer shadow-sm"
               >
                 <div className="flex items-center gap-3 min-w-0">
