@@ -44,7 +44,9 @@ export default function ChatPage() {
       content: trimmed,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+
+    setMessages(updatedMessages);
     setInput("");
     setLoading(true);
 
@@ -57,7 +59,7 @@ export default function ChatPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: trimmed,
+            messages: updatedMessages,
             model: selectedModel,
           }),
         }

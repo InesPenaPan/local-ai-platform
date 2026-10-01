@@ -79,7 +79,9 @@ export default function AgentChatPage({ agent: selectedAgent }) {
       content: trimmed,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+
+    setMessages(updatedMessages);
     setInput("");
     setLoading(true);
 
@@ -130,7 +132,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: trimmed,
+            messages: updatedMessages,
             model: agent.model,
             system_prompt: finalSystemPrompt,
           }),

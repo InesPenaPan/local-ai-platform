@@ -15,10 +15,12 @@ router = APIRouter(prefix="/api/v1", tags=["AI Services Gateway"])
 @router.post("/llm/generate", response_model=ChatResponse)
 async def proxy_chat(payload: ChatRequest):
     """
-    Forwards chat requests to the downstream LLM inference microservice.
+    Forwards chat requests (including message history and roles) 
+    to the downstream LLM inference microservice.
     """
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
+            # model_dump() convertirá correctamente la lista de mensajes y los Enums a JSON
             response = await client.post(
                 "http://llm-service:8001/generate",
                 json=payload.model_dump()

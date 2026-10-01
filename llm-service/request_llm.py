@@ -1,32 +1,37 @@
 import requests
-from typing import Optional 
+from typing import Optional, List
+from models import ChatMessage
 
-def generate_from_ollama(model_name: str, prompt: str, system_prompt: Optional[str] = None) -> str:
-    """
-    Interfaces with a local Ollama instance to generate text based on a user prompt, 
-    supporting optional system instructions to define custom agent behavior.
-    """
+def generate_from_ollama(model_name: str, messages: List[ChatMessage], system_prompt: Optional[str] = None) -> str:
     
-    # ollama_url = "http://localhost:11434/api/generate"
-    ollama_url = "http://host.docker.internal:11434/api/generate"
+    ollama_url = "http://host.docker.internal:11434/api/chat"
     
-    # Construct the base payload with the required model and user prompt
+    formatted_messages = []
+    
+    # Inject system prompt at the beginning if provided
+    if system_prompt:
+        formatted_messages.append({
+            "role": "system",
+            "content": system_prompt
+        })
+        
+    # Append all conversation messages
+    for msg in messages:
+        formatted_messages.append({
+            "role": msg.role.value,
+            "content": msg.content
+        })
+    
     payload = {
         "model": model_name,
-        "prompt": prompt,
+        "messages": formatted_messages,
         "stream": False
     }
     
-    # Inject the system prompt into the payload if agent instructions are provided
-    if system_prompt:
-        payload["system"] = system_prompt
-    
-    # Execute the POST request to the Ollama API
     response = requests.post(ollama_url, json=payload)
-    
-    # Validate the response, raising an HTTPError for bad status codes
     response.raise_for_status() 
     
-    # Extract and return the generated response string from the JSON payload
     data = response.json()
-    return data.get("response", "")
+    
+    # Extract response content from Ollama's chat response structure
+    return data.get("message", {}).get("content", "")
