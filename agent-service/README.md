@@ -72,7 +72,7 @@ To quickly view all saved agents and their configurations (such as their exact `
 
 ```PowerShell
 python -c "import sqlite3, json; c=sqlite3.connect('agents.db'); c.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in c.execute('SELECT * FROM agents')], indent=2, ensure_ascii=False))"
-``
+```
 
 ## 📁 Project Structure
 

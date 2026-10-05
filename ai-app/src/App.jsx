@@ -13,6 +13,13 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState("chat");
   const [selectedAgent, setSelectedAgent] = useState(null);
 
+  // Sidebar only appears on chat/agent pages
+  const showSidebar = [
+    "chat",
+    "create-agent",
+    "agent-chat",
+  ].includes(currentTab);
+
   // Handle navigation between the main application views
   const handleNavigate = (tab) => {
     setCurrentTab(tab);
@@ -60,15 +67,17 @@ export default function App() {
         onSelectTab={handleNavigate}
       />
 
-      {/* Sidebar + main content */}
+      {/* Content area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* Global sidebar */}
-        <Sidebar
-          onNewConversation={handleNewConversation}
-          onNewAgentClick={handleNewAgent}
-          onSelectAgent={handleSelectAgent}
-        />
+        {/* Sidebar - only for chat and agent pages */}
+        {showSidebar && (
+          <Sidebar
+            onNewConversation={handleNewConversation}
+            onNewAgentClick={handleNewAgent}
+            onSelectAgent={handleSelectAgent}
+          />
+        )}
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-hidden relative">
@@ -94,12 +103,12 @@ export default function App() {
             />
           )}
 
-          {/* Knowledge base */}
+          {/* Knowledge base - NO SIDEBAR */}
           {currentTab === "rag" && (
             <KnowledgePage />
           )}
 
-          {/* Settings */}
+          {/* Settings - NO SIDEBAR */}
           {currentTab === "settings" && (
             <div className="flex items-center justify-center h-full text-slate-400">
               <p>Settings View</p>
@@ -111,3 +120,4 @@ export default function App() {
     </div>
   );
 }
+

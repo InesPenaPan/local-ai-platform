@@ -1,5 +1,3 @@
-
-import { useState } from "react";
 import {
   Save,
   Settings2,
@@ -11,97 +9,25 @@ import {
 
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
+import { useCreateAgent } from "./hooks/useCreateAgent";
 
 export default function NewAgentPage({
   onCancel,
   onAgentCreated,
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    systemPrompt: "",
-    model: "llama3.1",
-    collection: "none",
-    temperature: 0.7,
+  const {
+    formData,
+    loading,
+    error,
+    successMessage,
+    handleChange,
+    handleSubmit,
+  } = useCreateAgent({
+    onAgentCreated,
   });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Ensure temperature is stored as a floating-point number
-    const parsedValue =
-      name === "temperature" ? parseFloat(value) : value;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: parsedValue,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(false);
-
-    try {
-      const response = await fetch(
-        "http://localhost:8000/api/v1/agents/create-agent",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(
-          errorData.detail ||
-            "Error creating the agent on the server."
-        );
-      }
-
-      const result = await response.json();
-
-      console.log("Agent saved successfully:", result);
-
-      setSuccessMessage(true);
-
-      // Clear form after successful creation
-      setFormData({
-        name: "",
-        description: "",
-        systemPrompt: "",
-        model: "llama3.1",
-        collection: "none",
-        temperature: 0.7,
-      });
-
-      // Notify App.jsx that the agent was created
-      if (onAgentCreated) {
-        onAgentCreated(result);
-      }
-    } catch (err) {
-      console.error("Request error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-
-      {/* Main content */}
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto custom-scrollbar relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)] p-8 md:p-12">
 
         <div className="max-w-3xl w-full mx-auto pb-12">
@@ -131,7 +57,7 @@ export default function NewAgentPage({
           <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-8">
 
-              {/* Section 1: Basic Identity */}
+              {/* Identity */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
                   <Fingerprint
@@ -145,6 +71,7 @@ export default function NewAgentPage({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Agent Name
@@ -175,10 +102,11 @@ export default function NewAgentPage({
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
                     />
                   </div>
+
                 </div>
               </div>
 
-              {/* Section 2: Behavior */}
+              {/* Behavior */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
                   <Settings2
@@ -212,7 +140,7 @@ export default function NewAgentPage({
                 </div>
               </div>
 
-              {/* Section 3: Configuration & RAG */}
+              {/* Configuration & RAG */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
                   <Database
@@ -226,6 +154,8 @@ export default function NewAgentPage({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                  {/* Model */}
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Base LLM Model
@@ -251,6 +181,7 @@ export default function NewAgentPage({
                     </select>
                   </div>
 
+                  {/* Collection */}
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Attach Knowledge Base (RAG)
@@ -277,6 +208,7 @@ export default function NewAgentPage({
                   </div>
                 </div>
 
+                {/* Temperature */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -353,4 +285,3 @@ export default function NewAgentPage({
     </div>
   );
 }
-

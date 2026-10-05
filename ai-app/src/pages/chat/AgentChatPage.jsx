@@ -3,16 +3,21 @@ import { Bot } from "lucide-react";
 
 import Message from "./subcomponents/Message";
 import PromptInput from "./subcomponents/PromptInput";
+import { useChat } from "./hooks/useChat";
 
 export default function AgentChatPage({ agent: selectedAgent }) {
   const [agent, setAgent] = useState(selectedAgent || null);
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const [agentLoading, setAgentLoading] = useState(true);
   const [agentError, setAgentError] = useState(null);
 
   const messagesEndRef = useRef(null);
+
+  const {
+    messages,
+    loading,
+    sendMessage: sendChatMessage,
+  } = useChat();
 
   // Load agent information from the API Gateway
   useEffect(() => {
@@ -54,18 +59,14 @@ export default function AgentChatPage({ agent: selectedAgent }) {
   }, [selectedAgent]);
 
   // Scroll to the bottom whenever messages or loading state changes
-  const scrollToBottom = () => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
   }, [messages, loading]);
 
-  // Send a message to the LLM Gateway using the selected agent configuration
-  const sendMessage = async (e) => {
+  // Send message through useChat
+  const handleSend = async (e) => {
     e.preventDefault();
 
     const trimmed = input.trim();
@@ -74,100 +75,59 @@ export default function AgentChatPage({ agent: selectedAgent }) {
       return;
     }
 
-    const userMessage = {
-      role: "user",
-      content: trimmed,
-    };
+    let finalSystemPrompt = agent.systemPrompt || "";
 
-    const updatedMessages = [...messages, userMessage];
-
-    setMessages(updatedMessages);
-    setInput("");
-    setLoading(true);
-
-    try {
-      // Start with the agent's base system prompt
-      let finalSystemPrompt = agent.systemPrompt || "";
-
-      // Search for additional context if the agent has a RAG collection
-      if (agent.collection && agent.collection !== "none") {
-        try {
-          const searchRes = await fetch(
-            "http://localhost:8000/api/v1/rag/search",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                query: trimmed,
-                collection_name: agent.collection,
-                top_k: 3,
-              }),
-            }
-          );
-
-          if (searchRes.ok) {
-            const searchData = await searchRes.json();
-
-            // Add retrieved context to the system prompt
-            if (searchData.context) {
-              finalSystemPrompt += `\n\n### CONTEXT INFORMATION ###\nUse the following information to answer the question. If the answer is not present in the context, state this clearly.\n\n${searchData.context}`;
-            }
+    // Retrieve RAG context if the agent has a collection
+    if (agent.collection && agent.collection !== "none") {
+      try {
+        const searchRes = await fetch(
+          "http://localhost:8000/api/v1/rag/search",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: trimmed,
+              collection_name: agent.collection,
+              top_k: 3,
+            }),
           }
-        } catch (error) {
-          console.error(
-            "Error retrieving RAG context:",
-            error
-          );
-        }
-      }
+        );
 
-      // Send the final request to the LLM Gateway
-      const response = await fetch(
-        "http://localhost:8000/api/v1/llm/generate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messages: updatedMessages,
-            model: agent.model,
-            system_prompt: finalSystemPrompt,
-          }),
-        }
-      );
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
 
-      if (!response.ok) {
-        throw new Error(
-          `Gateway returned status: ${response.status}`
+          if (searchData.context) {
+            finalSystemPrompt += `
+            
+### CONTEXT INFORMATION ###
+
+Use the following information to answer the question. If the answer is not present in the context, state this clearly.
+
+${searchData.context}`;
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error retrieving RAG context:",
+          error
         );
       }
-
-      const data = await response.json();
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-        },
-      ]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Could not get a response from the agent.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
     }
+
+    // useChat handles:
+    // - adding the user message
+    // - calling /llm/generate
+    // - adding the assistant message
+    // - loading state
+    await sendChatMessage({
+      content: trimmed,
+      model: agent.model,
+      systemPrompt: finalSystemPrompt,
+    });
+
+    setInput("");
   };
 
   // Show a loading state while retrieving the agent
@@ -206,14 +166,11 @@ export default function AgentChatPage({ agent: selectedAgent }) {
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-
-      {/* Main agent chat area */}
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
 
         {/* Agent information header */}
         <header className="shrink-0 px-6 pt-6 relative z-20">
           <div className="max-w-4xl mx-auto">
-
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#080d17]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
 
               {/* Decorative background glow */}
@@ -290,7 +247,6 @@ export default function AgentChatPage({ agent: selectedAgent }) {
           {/* Chat history */}
           <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-8 space-y-8 relative z-10 pb-24">
 
-            {/* Message list */}
             {messages.map((msg, idx) => (
               <Message
                 key={idx}
@@ -335,7 +291,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
           input={input}
           setInput={setInput}
           loading={loading}
-          onSubmit={sendMessage}
+          onSubmit={handleSend}
           placeholder={`Message ${agent.name}...`}
           hideModelSelector
         />
@@ -344,3 +300,4 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     </div>
   );
 }
+

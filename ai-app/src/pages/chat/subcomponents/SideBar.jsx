@@ -24,6 +24,18 @@ export default function Sidebar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Mock past conversations
+  const pastConversations = [
+    {
+      id: 1,
+      title: "Building a React Dashboard",
+    },
+    {
+      id: 2,
+      title: "API Integration Help",
+    },
+  ];
+
   // Fetch agents from the backend
   useEffect(() => {
     const fetchAgents = async () => {
@@ -67,6 +79,25 @@ export default function Sidebar({
         onClick={onNewConversation}
         className="mt-10"
       />
+
+
+      {/* Past Conversations */}
+      <div className="mt-4 flex flex-col space-y-1">
+        {pastConversations.map((conversation) => (
+          <button
+            key={conversation.id}
+            type="button"
+            className="group flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 text-left"
+          >
+            <div className="w-2 h-2 rounded-full bg-pink-500/40 group-hover:bg-pink-500 group-hover:shadow-[0_0_8px_rgba(236,72,153,0.6)] transition-all shrink-0" />
+
+            <span className="text-sm font-light text-slate-400 group-hover:text-white transition-colors truncate">
+              {conversation.title}
+            </span>
+          </button>
+        ))}
+      </div>
+
 
       {/* Agents Section */}
       <div className="mt-8 flex flex-col flex-1 min-h-0">

@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 import httpx
 
@@ -7,7 +8,11 @@ from schemas import (
     TextEmbeddingRequest, 
     EmbeddingResponse,
     SearchRequest,
-    SearchResponse
+    SearchResponse,
+    ConversationCreate,   
+    ConversationResponse, 
+    MessageCreate,       
+    MessageResponse      
 )
 
 router = APIRouter(prefix="/api/v1", tags=["AI Services Gateway"])
