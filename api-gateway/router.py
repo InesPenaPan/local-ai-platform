@@ -255,3 +255,102 @@ async def proxy_get_agent(name: str):
             status_code=exc.response.status_code,
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
+
+@router.get("/history/conversations")
+async def proxy_list_conversations():
+    """
+    Fetches the list of all saved conversations from the chat-history-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get("http://chat-history-service:8004/conversations")
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream chat-history-service is unreachable (port 8004 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream chat-history-service error: {exc.response.text}"
+        )
+
+
+@router.post("/history/conversations")
+async def proxy_create_conversation(payload: ConversationCreate):
+    """
+    Forwards a request to create a new conversation to the chat-history-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                "http://chat-history-service:8004/conversations",
+                json=payload.model_dump()
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream chat-history-service is unreachable (port 8004 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream chat-history-service error: {exc.response.text}"
+        )
+
+
+@router.get("/history/conversations/{conversation_id}/messages")
+async def proxy_get_conversation_messages(conversation_id: int):
+    """
+    Fetches all messages belonging to a specific conversation from chat-history-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"http://chat-history-service:8004/conversations/{conversation_id}/messages"
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream chat-history-service is unreachable (port 8004 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream chat-history-service error: {exc.response.text}"
+        )
+
+
+@router.post("/history/conversations/{conversation_id}/messages")
+async def proxy_add_message_to_conversation(conversation_id: int, payload: MessageCreate):
+    """
+    Forwards a message (user prompt or assistant reply) to be saved in a conversation.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                f"http://chat-history-service:8004/conversations/{conversation_id}/messages",
+                json=payload.model_dump()
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream chat-history-service is unreachable (port 8004 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream chat-history-service error: {exc.response.text}"
+        )

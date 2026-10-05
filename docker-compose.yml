@@ -45,6 +45,18 @@ services:
     networks:
       - ai_network
 
+  # Chat History Service (Port 8004) - Almacena conversaciones y mensajes
+  chat-history-service:
+    build: ./chat-history-service
+    container_name: chat_history_service
+    ports:
+      - "8004:8004"
+    volumes:
+      - chat_history_storage:/app
+    restart: always
+    networks:
+      - ai_network
+
   # API Gateway (Port 8000)
   api-gateway:
     build: ./api-gateway
@@ -55,10 +67,12 @@ services:
       - LLM_SERVICE_URL=http://llm-service:8001
       - RAG_SERVICE_URL=http://rag-service:8002
       - AGENT_SERVICE_URL=http://agent-service:8003
+      - CHAT_HISTORY_SERVICE_URL=http://chat-history-service:8004
     depends_on:
       - llm-service
       - rag-service
       - agent-service
+      - chat-history-service
     restart: always
     networks:
       - ai_network
@@ -89,6 +103,7 @@ services:
 
 volumes:
   qdrant_storage:
+  chat_history_storage:
 
 networks:
   ai_network:
