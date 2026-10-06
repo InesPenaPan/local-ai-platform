@@ -1,12 +1,5 @@
 import { useState } from "react";
 
-// ============================================================================
-// useCreateAgent
-// ----------------------------------------------------------------------------
-// Custom hook that manages the create-agent form state, agent creation,
-// loading state, success/error messages, and form reset.
-// ============================================================================
-
 const API_URL = "http://localhost:8000/api/v1";
 
 const initialFormData = {
@@ -18,6 +11,23 @@ const initialFormData = {
   temperature: 0.7,
 };
 
+/**
+ * useCreateAgent custom hook manages the form state, validation, error handling,
+ * and API submission for creating new custom AI assistants.
+ * 
+ * @function useCreateAgent
+ * @param {Object} [options] - Hook configuration options
+ * @param {function(Object): void} [options.onAgentCreated] - Callback function triggered upon successfully creating and saving a new agent
+ * @returns {Object} The agent creation form controller and state variables
+ * @returns {Object} returns.formData - The current state of the form fields
+ * @returns {boolean} returns.loading - Flag indicating whether an API request is currently in progress
+ * @returns {string|null} returns.error - Error message if the agent creation fails
+ * @returns {boolean} returns.successMessage - Flag indicating whether the agent was created successfully
+ * @returns {function(React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>): void} returns.handleChange - Event handler to update form input values
+ * @returns {function(React.FormEvent<HTMLFormElement>): Promise<void>} returns.handleSubmit - Form submission event handler
+ * @returns {function(): Promise<Object|null>} returns.createAgent - Async function to submit agent data to the API gateway
+ * @returns {function(): void} returns.resetForm - Resets form state, error status, and success state to initial values
+ */
 export function useCreateAgent({ onAgentCreated } = {}) {
   const [formData, setFormData] = useState(initialFormData);
   const [loading, setLoading] = useState(false);
@@ -27,8 +37,7 @@ export function useCreateAgent({ onAgentCreated } = {}) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    const parsedValue =
-      name === "temperature" ? parseFloat(value) : value;
+    const parsedValue = name === "temperature" ? parseFloat(value) : value;
 
     setFormData((prev) => ({
       ...prev,
@@ -36,6 +45,9 @@ export function useCreateAgent({ onAgentCreated } = {}) {
     }));
   };
 
+  /**
+  * Send agent data to the API
+  */
   const createAgent = async () => {
     setLoading(true);
     setError(null);
@@ -55,11 +67,7 @@ export function useCreateAgent({ onAgentCreated } = {}) {
 
       if (!response.ok) {
         const errorData = await response.json();
-
-        throw new Error(
-          errorData.detail ||
-            "Error creating the agent on the server."
-        );
+        throw new Error(errorData.detail || "Error creating the agent on the server.");
       }
 
       const result = await response.json();
@@ -68,10 +76,8 @@ export function useCreateAgent({ onAgentCreated } = {}) {
 
       setSuccessMessage(true);
 
-      // Reset form after successful creation
       setFormData(initialFormData);
 
-      // Notify parent component
       if (onAgentCreated) {
         onAgentCreated(result);
       }
@@ -108,7 +114,6 @@ export function useCreateAgent({ onAgentCreated } = {}) {
     loading,
     error,
     successMessage,
-
     handleChange,
     handleSubmit,
     createAgent,

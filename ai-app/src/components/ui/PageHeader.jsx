@@ -1,3 +1,13 @@
+/**
+ * PageTitle component renders a styled header section featuring a main title
+ * and an optional descriptive subtitle with light font weight and tracking.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {string} props.title - The primary heading text to display
+ * @param {string} [props.subtitle] - Optional secondary descriptive text displayed below the title
+ * @returns {JSX.Element} The rendered page title container
+ */
 export default function PageTitle({ title, subtitle }) {
   return (
     <div>

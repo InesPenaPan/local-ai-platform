@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
-import {
-  MessageSquarePlus,
-  Bot,
-  Edit2,
-  Loader2,
-} from "lucide-react";
+import { MessageSquarePlus, Bot, Edit2, Loader2 } from "lucide-react";
 
 import NewButton from "./NewButton";
 
+/**
+ * Sidebar component acts as the primary navigation drawer, fetching and displaying
+ * past conversations and AI agents from the backend, with controls to create new items
+ * or select existing ones.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {function(): void} props.onNewConversation - Callback triggered when the "New Conversation" button is clicked
+ * @param {function(): void} props.onNewAgentClick - Callback triggered when the "New Agent" button is clicked
+ * @param {function(Object): void} props.onSelectAgent - Callback triggered when an individual agent is selected
+ * @param {function(string): void} props.onSelectConversation - Callback triggered when a past conversation is selected
+ * @returns {JSX.Element} The rendered sidebar container with conversation and agent lists
+ */
 export default function Sidebar({
   onNewConversation,
   onNewAgentClick,
@@ -19,6 +27,9 @@ export default function Sidebar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  /**
+   * Load agents and conversations when the sidebar is mounted.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -34,18 +45,14 @@ export default function Sidebar({
           const agentsData = await agentsRes.json();
           setAgents(Array.isArray(agentsData) ? agentsData : []);
         } else {
-          console.error(
-            `Failed to load agents (${agentsRes.status})`
-          );
+          console.error(`Failed to load agents (${agentsRes.status})`);
         }
 
         if (convRes.ok) {
           const convData = await convRes.json();
           setPastConversations(Array.isArray(convData) ? convData : []);
         } else {
-          console.error(
-            `Failed to load conversations (${convRes.status})`
-          );
+          console.error(`Failed to load conversations (${convRes.status})`);
         }
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -60,39 +67,25 @@ export default function Sidebar({
     fetchData();
   }, []);
 
-  // ============================================================
-  // Seleccionar conversación
-  // ============================================================
-  const handleSelectConversation = (conversation) => {
-    console.log(
-      "SIDEBAR - Conversación seleccionada:",
-      conversation
-    );
 
-    console.log(
-      "SIDEBAR - ID:",
-      conversation?.id
-    );
+  /**
+   * Select conversation
+   */
+  const handleSelectConversation = (conversation) => {
+    console.log("SIDEBAR - Conversación seleccionada:", conversation);
+    console.log("SIDEBAR - ID:", conversation?.id);
 
     if (!conversation?.id) {
-      console.error(
-        "SIDEBAR - La conversación no tiene ID:",
-        conversation
-      );
+      console.error("SIDEBAR - La conversación no tiene ID:", conversation);
       return;
     }
 
     if (typeof onSelectConversation !== "function") {
-      console.error(
-        "SIDEBAR - onSelectConversation no está definido"
-      );
+      console.error("SIDEBAR - onSelectConversation no está definido");
       return;
     }
 
-    console.log(
-      "SIDEBAR - Enviando ID al App:",
-      conversation.id
-    );
+    console.log("SIDEBAR - Enviando ID al App:", conversation.id);
 
     onSelectConversation(conversation.id);
   };
@@ -100,7 +93,7 @@ export default function Sidebar({
   return (
     <aside className="w-72 h-full bg-[#0b111c]/95 border-r border-white/5 flex flex-col p-5 select-none z-40">
 
-      {/* New Conversation */}
+      {/* Button for starting a new conversation */}
       <NewButton
         icon={MessageSquarePlus}
         label="New Conversation"
@@ -108,7 +101,7 @@ export default function Sidebar({
         className="mt-10"
       />
 
-      {/* Past Conversations */}
+      {/* List of previously created conversations */}
       <div className="mt-4 flex flex-col space-y-1">
 
         {pastConversations.map((conversation) => (
@@ -137,14 +130,12 @@ export default function Sidebar({
           )}
       </div>
 
-      {/* Agents Section */}
+      {/* Agents section */}
       <div className="mt-8 flex flex-col flex-1 min-h-0">
 
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">
-          Agents
-        </h3>
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2"> Agents </h3>
 
-        {/* New Agent */}
+        {/* Button for creating a new agent. */}
         <NewButton
           icon={Bot}
           label="New Agent"
@@ -152,40 +143,33 @@ export default function Sidebar({
           className="mb-4 shrink-0"
         />
 
-        {/* Agents List */}
+        {/* Scrollable list of available agents. */}
         <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-220px)] custom-scrollbar pr-1">
 
-          {/* Loading */}
+          {/* Loading state while agents are being fetched */}
           {loading && (
             <div className="flex items-center gap-2.5 px-3 py-3 text-xs text-slate-500 bg-white/[0.02] rounded-xl border border-white/5">
-              <Loader2
-                size={14}
-                className="animate-spin text-[#3b82f6]"
-              />
-
-              <span className="font-light">
-                Loading agents...
-              </span>
+              <Loader2 size={14} className="animate-spin text-[#3b82f6]"/>
+              <span className="font-light"> Loading agents... </span>
             </div>
           )}
 
-          {/* Error */}
+          {/* Error state when the data request fails */}
           {!loading && error && (
             <div className="px-3 py-3 text-xs text-rose-400 bg-rose-950/20 rounded-xl border border-rose-500/10 font-light">
               Failed to sync agents.
             </div>
           )}
 
-          {/* Empty */}
+          {/* Empty state when no agents exist */}
           {!loading && !error && agents.length === 0 && (
             <div className="px-3 py-4 text-xs text-slate-500 font-light bg-white/[0.01] rounded-xl border border-dashed border-white/5 text-center">
               No custom agents created yet.
             </div>
           )}
 
-          {/* Agents */}
-          {!loading &&
-            !error &&
+          {/* Render each available agent */}
+          {!loading && !error &&
             agents.map((agent) => (
               <div
                 key={agent.id ?? agent.name}
@@ -208,7 +192,7 @@ export default function Sidebar({
                   </span>
                 </div>
 
-                {/* Edit Button */}
+                {/* Edit button appears when hovering over an agent. */}
                 <button
                   type="button"
                   onClick={(e) => {

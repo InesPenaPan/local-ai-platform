@@ -1,11 +1,16 @@
-// ============================================================================
-// NewButton
-// ----------------------------------------------------------------------------
-// A reusable button component primarily used within the sidebar to trigger
-// the creation of new entities, such as starting a "New Chat" or creating a 
-// "New Agent".
-// ============================================================================
-
+/**
+ * NewButton component renders a reusable, interactive button primarily used in sidebars
+ * to trigger actions such as creating a new chat or a new agent, featuring an optional icon,
+ * custom styling classes, and smooth hover/active scaling states.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {React.ComponentType<{size?: number, strokeWidth?: number, className?: string}>} [props.icon] - Optional Lucide icon component to display on the left
+ * @param {string} props.label - The text label displayed inside the button
+ * @param {function(React.MouseEvent): void} [props.onClick] - Click event handler callback function
+ * @param {string} [props.className] - Additional Tailwind CSS classes to customize the button styling
+ * @returns {JSX.Element} The rendered styled button component
+ */
 export default function NewButton({ icon: Icon, label, onClick, className = "" }) {
   return (
     <button 

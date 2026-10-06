@@ -1,11 +1,14 @@
-// ============================================================================
-// ChatEmptyState
-// ----------------------------------------------------------------------------
-// Displays the initial empty state of the chat interface, including a
-// customizable icon, decorative glow effects, a title, and an optional
-// subtitle shown before the user starts a conversation.
-// ============================================================================
-
+/**
+ * ChatEmptyState component displays the initial empty state of the chat interface,
+ * featuring a customizable icon with background glow effects, a title, and an optional subtitle.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {React.ComponentType<{size?: number, strokeWidth?: number, className?: string}>} props.icon - The Lucide icon component to render in the center
+ * @param {string} props.title - The primary message or title displayed below the icon
+ * @param {string} [props.subtitle] - Optional secondary descriptive text for further guidance
+ * @returns {JSX.Element} The rendered chat empty state container
+ */
 export default function ChatEmptyState({icon: Icon, title, subtitle,}) {
   return (
     <div className="flex flex-col items-center justify-center animate-fade-in pointer-events-none">

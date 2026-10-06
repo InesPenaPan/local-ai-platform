@@ -6,49 +6,66 @@ import Sidebar from "./pages/chat/subcomponents/SideBar";
 import ChatPage from "./pages/chat/ChatPage";
 import NewAgentPage from "./pages/chat/NewAgentPage";
 import AgentChatPage from "./pages/chat/AgentChatPage";
-
 import KnowledgePage from "./pages/knowledge/KnowledgePage";
 
+/**
+ * App component acts as the root application container, managing global navigation tabs,
+ * active custom agent states, conditional sidebar visibility, and view routing across the platform.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered root application layout container
+ */
 export default function App() {
   const [currentTab, setCurrentTab] = useState("chat");
   const [selectedAgent, setSelectedAgent] = useState(null);
 
-  // Sidebar only appears on chat/agent pages
   const showSidebar = [
     "chat",
     "create-agent",
     "agent-chat",
   ].includes(currentTab);
 
-  // Handle navigation between the main application views
+  /**
+  * Handle navigation between pages
+  */
   const handleNavigate = (tab) => {
     setCurrentTab(tab);
 
-    // Clear the selected agent when returning to normal chat
+    /**
+    * Reset selected agent when returning to normal chat
+    */
     if (tab === "chat") {
       setSelectedAgent(null);
     }
   };
 
-  // Start a new conversation
+  /**
+  * Start a new conversation
+  */
   const handleNewConversation = () => {
     setSelectedAgent(null);
     setCurrentTab("chat");
   };
 
-  // Navigate to the new agent page
+  /**
+  * Open the create-agent page
+  */
   const handleNewAgent = () => {
     setSelectedAgent(null);
     setCurrentTab("create-agent");
   };
 
-  // Select an existing agent and open its chat
+  /**
+  * Open the selected agent's chat
+  */
   const handleSelectAgent = (agent) => {
     setSelectedAgent(agent);
     setCurrentTab("agent-chat");
   };
 
-  // Handle the result after creating a new agent
+  /**
+  * Handle a newly created agent
+  */
   const handleAgentCreated = (agent) => {
     if (agent) {
       setSelectedAgent(agent);
@@ -61,16 +78,11 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-[#0a0f18] text-white">
 
-      {/* Global header */}
-      <Header
-        currentTab={currentTab}
-        onSelectTab={handleNavigate}
-      />
+      <Header currentTab={currentTab} onSelectTab={handleNavigate}/>
 
-      {/* Content area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* Sidebar - only for chat and agent pages */}
+        {/* Sidebar only for chat/agent pages */}
         {showSidebar && (
           <Sidebar
             onNewConversation={handleNewConversation}
@@ -79,7 +91,7 @@ export default function App() {
           />
         )}
 
-        {/* Main content */}
+        {/* Current page content */}
         <main className="flex-1 min-w-0 overflow-hidden relative">
 
           {/* Normal chat */}
@@ -95,7 +107,7 @@ export default function App() {
             />
           )}
 
-          {/* Agent chat */}
+          {/* Selected agent chat */}
           {currentTab === "agent-chat" && selectedAgent && (
             <AgentChatPage
               agent={selectedAgent}
@@ -103,12 +115,12 @@ export default function App() {
             />
           )}
 
-          {/* Knowledge base - NO SIDEBAR */}
+          {/* Knowledge base */}
           {currentTab === "rag" && (
             <KnowledgePage />
           )}
 
-          {/* Settings - NO SIDEBAR */}
+          {/* Settings */}
           {currentTab === "settings" && (
             <div className="flex items-center justify-center h-full text-slate-400">
               <p>Settings View</p>

@@ -1,20 +1,21 @@
-import {
-  Save,
-  Settings2,
-  Database,
-  Sliders,
-  Fingerprint,
-  Loader2,
-} from "lucide-react";
+import { Save, Settings2, Database, Sliders, Fingerprint, Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
 import { useCreateAgent } from "./hooks/useCreateAgent";
 
-export default function NewAgentPage({
-  onCancel,
-  onAgentCreated,
-}) {
+/**
+ * NewAgentPage component renders a form interface for creating and configuring
+ * custom AI assistants, allowing users to define identity, system prompts, base LLM models,
+ * RAG knowledge bases, and temperature settings.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {function(): void} props.onCancel - Callback function triggered when the cancel button is clicked
+ * @param {function(Object): void} props.onAgentCreated - Callback function triggered successfully after a new agent is created
+ * @returns {JSX.Element} The rendered new agent creation page layout
+ */
+export default function NewAgentPage({ onCancel, onAgentCreated }) {
   const {
     formData,
     loading,
@@ -22,9 +23,7 @@ export default function NewAgentPage({
     successMessage,
     handleChange,
     handleSubmit,
-  } = useCreateAgent({
-    onAgentCreated,
-  });
+  } = useCreateAgent({ onAgentCreated });
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
@@ -32,7 +31,7 @@ export default function NewAgentPage({
 
         <div className="max-w-3xl w-full mx-auto pb-12">
 
-          {/* Page Header */}
+          {/* Page title and description */}
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
             <PageHeader
               title="New Agent"
@@ -40,14 +39,13 @@ export default function NewAgentPage({
             />
           </div>
 
-          {/* Success Message */}
+          {/* Display the creation result or any submission error */}
           {successMessage && (
             <div className="mb-6 p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-sm">
               Agent created and saved to the database successfully!
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-sm">
               Error: {error}
@@ -57,21 +55,16 @@ export default function NewAgentPage({
           <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-8">
 
-              {/* Identity */}
+              {/* Basic agent identity */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
-                  <Fingerprint
-                    size={16}
-                    className="text-[#DE145C]"
-                  />
-
+                  <Fingerprint size={16} className="text-[#DE145C]"/>
                   <h2 className="text-sm font-semibold uppercase tracking-wider">
                     Identity
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Agent Name
@@ -106,14 +99,10 @@ export default function NewAgentPage({
                 </div>
               </div>
 
-              {/* Behavior */}
+              {/* Agent instructions and behavior */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
-                  <Settings2
-                    size={16}
-                    className="text-[#3b82f6]"
-                  />
-
+                  <Settings2 size={16} className="text-[#3b82f6]"/>
                   <h2 className="text-sm font-semibold uppercase tracking-wider">
                     Behavior
                   </h2>
@@ -140,14 +129,10 @@ export default function NewAgentPage({
                 </div>
               </div>
 
-              {/* Configuration & RAG */}
+              {/* Model and knowledge base configuration */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
-                  <Database
-                    size={16}
-                    className="text-emerald-400"
-                  />
-
+                  <Database size={16} className="text-emerald-400"/>
                   <h2 className="text-sm font-semibold uppercase tracking-wider">
                     Knowledge & Engine
                   </h2>
@@ -155,7 +140,6 @@ export default function NewAgentPage({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  {/* Model */}
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Base LLM Model
@@ -167,21 +151,11 @@ export default function NewAgentPage({
                       onChange={handleChange}
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
                     >
-                      <option value="llama3.1">
-                        Llama 3.1 (Recommended)
-                      </option>
-
-                      <option value="mistral">
-                        Mistral
-                      </option>
-
-                      <option value="gemma2">
-                        Gemma 2
-                      </option>
+                      <option value="llama3.1"> Llama 3.1 (Recommended) </option>
+                      <option value="mistral"> Mistral </option>
                     </select>
                   </div>
 
-                  {/* Collection */}
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
                       Attach Knowledge Base (RAG)
@@ -193,22 +167,14 @@ export default function NewAgentPage({
                       onChange={handleChange}
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
                     >
-                      <option value="none">
-                        No external knowledge
-                      </option>
-
-                      <option value="recetas-familiares">
-                        Recetas Familiares
-                      </option>
-
-                      <option value="hr-policies">
-                        Corporate HR Policies
-                      </option>
+                      <option value="none"> No external knowledge </option>
+                      <option value="recetas-familiares"> Recetas Familiares </option>
+                      <option value="hr-policies"> Corporate HR Policies </option>
                     </select>
                   </div>
                 </div>
 
-                {/* Temperature */}
+                {/* Control how deterministic or creative the model responses are */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -238,10 +204,9 @@ export default function NewAgentPage({
                 </div>
               </div>
 
-              {/* Footer Actions */}
               <div className="pt-6 border-t border-white/5 flex justify-end gap-4">
 
-                {/* Cancel */}
+                {/* Cancel without submitting the form */}
                 <button
                   type="button"
                   onClick={onCancel}
@@ -250,26 +215,16 @@ export default function NewAgentPage({
                   Cancel
                 </button>
 
-                {/* Create Agent */}
+                {/* Submit the form and create the agent */}
                 <button
                   type="submit"
-                  disabled={
-                    loading ||
-                    !formData.name ||
-                    !formData.systemPrompt
-                  }
+                  disabled={ loading || !formData.name || !formData.systemPrompt }
                   className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-medium text-slate-200 bg-[#1e293b] border border-white/10 hover:border-[#3b82f6]/50 hover:text-white shadow-lg transition-all disabled:opacity-50 cursor-pointer group"
                 >
                   {loading ? (
-                    <Loader2
-                      size={18}
-                      className="animate-spin text-[#3b82f6]"
-                    />
+                    <Loader2 size={18} className="animate-spin text-[#3b82f6]" />
                   ) : (
-                    <Save
-                      size={18}
-                      className="text-[#3b82f6] group-hover:scale-110 transition-transform"
-                    />
+                    <Save size={18} className="text-[#3b82f6] group-hover:scale-110 transition-transform" />
                   )}
 
                   <span>

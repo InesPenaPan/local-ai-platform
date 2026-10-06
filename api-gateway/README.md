@@ -48,7 +48,9 @@ The service relies on the following main components:
 
 | Component | Purpose |
 | :--- | :--- |
-| **React** | Component-based UI library |
+| **FastAPI** | HTTP API framework |
+| **Uvicorn** | ASGI application server |
+| **Pydantic** | Request/response validation and serialization |
 
 ## 📁 Project Structure
 

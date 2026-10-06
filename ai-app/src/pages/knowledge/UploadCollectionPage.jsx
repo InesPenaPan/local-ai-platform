@@ -1,17 +1,28 @@
 import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 
-import FormWrapper from "../../components/layout/FormWrapper"; // 
+import FormWrapper from "../../components/layout/FormWrapper"; 
 
+/**
+ * UploadCollectionPage component renders a form interface for uploading and indexing
+ * document files (.pdf or .txt) into a new Qdrant vector collection via the API gateway.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {function(): void} [props.onBack] - Optional callback function triggered to return to the previous view
+ * @param {function(Object): void} [props.onCollectionCreated] - Optional callback function triggered after successful collection indexing
+ * @returns {JSX.Element} The rendered upload collection page layout container
+ */
 export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
-  // State variables for form inputs, loading state, and feedback messages
   const [collectionName, setCollectionName] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Handle file selection from the file input element
+  /**
+  * Handle file selection
+  */
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
@@ -19,7 +30,9 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
     }
   };
 
-  // Handle form submission, form validation, and communication with the API Gateway
+  /**
+  * Validate form and upload document
+  */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!collectionName.trim()) {
@@ -30,17 +43,14 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
       setError("Please select a document (.pdf or .txt) to ingest.");
       return;
     }
-
     setLoading(true);
     setError("");
 
     try {
-      // 1. Prepare FormData containing the file and metadata
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("collection_name", collectionName);
 
-      // 2. Send HTTP POST request to the API Gateway running on port 8000
       const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
         method: "POST",
         body: formData,
@@ -52,10 +62,8 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
 
       const data = await res.json();
       
-      // Display success feedback showing stored chunks count
       setSuccessMessage(`Success! ${data.chunks_stored} chunks indexed.`);
       
-      // Notify parent component after a brief delay and navigate back to the grid view
       setTimeout(() => {
         if (onCollectionCreated) {
           onCollectionCreated({
@@ -75,13 +83,10 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
-      
-      {/* Main Container */}
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto custom-scrollbar relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)] p-8 md:p-12">
-        
         <div className="max-w-2xl w-full mx-auto">
           
-          {/* Back Navigation and Page Header */}
+          {/* Page header */}
           <div className="flex items-center gap-4 mb-8 pb-6 border-b border-white/5">
             {onBack && (
               <button
@@ -100,11 +105,10 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
             </div>
           </div>
 
-          {/* FormWrapper REEMPLAZA EL CONTENEDOR ANTERIOR */}
           <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Collection Name Input Field */}
+              {/* Collection name*/}
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
                   Collection Name
@@ -119,7 +123,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                 />
               </div>
 
-              {/* File Upload Box / Dropzone */}
+              {/* File upload (Dropzone) */}
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
                   Source Document (.pdf or .txt)
@@ -150,14 +154,12 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                 </label>
               </div>
 
-              {/* Error Notification Alert */}
               {error && (
                 <p className="text-xs text-[#DE145C] bg-[#DE145C]/10 border border-[#DE145C]/20 p-3 rounded-lg">
                   {error}
                 </p>
               )}
 
-              {/* Success Notification Alert */}
               {successMessage && (
                 <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
                   <CheckCircle2 size={16} />
@@ -165,7 +167,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                 </div>
               )}
 
-              {/* Footer Actions (Cancel and Submit Buttons) */}
+              {/* Form actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
                 {onBack && (
                   <button
@@ -177,7 +179,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                     Cancel
                   </button>
                 )}
-                {/* Clean non-colored button matching the Quiet Luxury theme */}
+
                 <button
                   type="submit"
                   disabled={loading}

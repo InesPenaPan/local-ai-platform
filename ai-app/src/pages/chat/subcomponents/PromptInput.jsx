@@ -1,13 +1,19 @@
 
 import { Send } from "lucide-react";
 
-// ============================================================================
-// PromptInput
-// ----------------------------------------------------------------------------
-// Renders the main text input area at the bottom of the chat interface.
-// It controls the user's message input, handles form submission, and 
-// ============================================================================
-
+/**
+ * PromptInput component renders the main chat input bar at the bottom of the interface,
+ * handling user text input, submission states, disabled loading states, and submit button toggling.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {string} props.input - The current value of the text input
+ * @param {function(string): void} props.setInput - State setter function to update the input value
+ * @param {boolean} props.loading - Flag indicating whether a response is currently loading (disables input and submit)
+ * @param {function(React.FormEvent): void} props.onSubmit - Form submission event handler callback
+ * @param {string} [props.placeholder="Message Local AI..."] - Optional custom placeholder text for the input field
+ * @returns {JSX.Element} The rendered prompt input footer container
+ */
 export default function PromptInput({input, setInput, loading, onSubmit, placeholder = "Message Local AI...", }) {
   return (
     <footer className="shrink-0 px-6 py-6 bg-gradient-to-t from-[#04070c] via-[#04070c]/95 to-transparent relative z-30">

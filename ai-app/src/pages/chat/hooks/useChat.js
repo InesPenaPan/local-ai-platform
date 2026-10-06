@@ -3,18 +3,35 @@ import { useState } from "react";
 
 const API_URL = "http://localhost:8000/api/v1";
 
+/**
+ * useChat custom hook manages chat state, conversation history persistence,
+ * message loading, and communication with the backend LLM generation API.
+ * 
+ * @function useChat
+ * @param {Object} [options] - Hook configuration options
+ * @param {boolean} [options.enableHistory=false] - Flag indicating whether to persist messages and create conversations in the backend history
+ * @returns {Object} The chat controller object and state variables
+ * @returns {Array<Object>} returns.messages - The list of current chat messages
+ * @returns {function(Array): void} returns.setMessages - State setter for messages
+ * @returns {function(Array): void} returns.setConversationMessages - Replaces the messages array with validation
+ * @returns {function(): void} returns.clearMessages - Clears current messages, input, and active conversation ID
+ * @returns {string} returns.input - Current user input field string value
+ * @returns {function(string): void} returns.setInput - State setter for input
+ * @returns {boolean} returns.loading - Flag indicating whether an LLM generation or fetch request is in progress
+ * @returns {function(Object): Promise<Object|null>} returns.sendMessage - Sends a user message, updates history, and calls the LLM generation endpoint
+ * @returns {function(string): Promise<void>} returns.loadConversation - Loads past messages for a specified conversation ID
+ */
 export function useChat({ enableHistory = false } = {}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
 
-  // ============================================================
-  // Cargar una conversación existente
-  // ============================================================
+  /**
+  * Load an existing conversation
+  */
   const loadConversation = async (id) => {
     if (!id) return;
-
     setLoading(true);
 
     try {
@@ -23,9 +40,7 @@ export function useChat({ enableHistory = false } = {}) {
       );
 
       if (!response.ok) {
-        throw new Error(
-          `No se pudieron cargar los mensajes (${response.status})`
-        );
+        throw new Error(`No se pudieron cargar los mensajes (${response.status})`);
       }
 
       const data = await response.json();
@@ -40,9 +55,9 @@ export function useChat({ enableHistory = false } = {}) {
     }
   };
 
-  // ============================================================
-  // Enviar mensaje
-  // ============================================================
+  /**
+  * Send a message to the backend
+  */
   const sendMessage = async ({
     content,
     model = "llama3.1",
@@ -68,12 +83,11 @@ export function useChat({ enableHistory = false } = {}) {
     let currentConvId = conversationId;
 
     try {
-      // ========================================================
-      // Historial
-      // ========================================================
       if (enableHistory) {
 
-        // Crear conversación si todavía no existe
+        /**
+        * Create conversation and save user message
+        */
         if (!currentConvId) {
           const convRes = await fetch(
             `${API_URL}/history/conversations`,
@@ -104,7 +118,9 @@ export function useChat({ enableHistory = false } = {}) {
           setConversationId(currentConvId);
         }
 
-        // Guardar mensaje del usuario
+        /**
+        * Save the user message to history
+        */
         if (currentConvId) {
           const userHistoryRes = await fetch(
             `${API_URL}/history/conversations/${currentConvId}/messages`,
@@ -121,17 +137,14 @@ export function useChat({ enableHistory = false } = {}) {
           );
 
           if (!userHistoryRes.ok) {
-            console.error(
-              "No se pudo guardar el mensaje del usuario:",
-              userHistoryRes.status
-            );
+            console.error("No se pudo guardar el mensaje del usuario:", userHistoryRes.status);
           }
         }
       }
 
-      // ========================================================
-      // Generar respuesta del modelo
-      // ========================================================
+      /**
+      * Generate assistant response
+      */
       const response = await fetch(
         `${API_URL}/llm/generate`,
         {
@@ -148,9 +161,7 @@ export function useChat({ enableHistory = false } = {}) {
       );
 
       if (!response.ok) {
-        throw new Error(
-          `Gateway returned status: ${response.status}`
-        );
+        throw new Error(`Gateway returned status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -160,15 +171,14 @@ export function useChat({ enableHistory = false } = {}) {
         content: data.reply,
       };
 
-      // Mostrar respuesta del asistente
       setMessages((prev) => [
         ...prev,
         assistantMessage,
       ]);
 
-      // ========================================================
-      // Guardar respuesta del asistente en el historial
-      // ========================================================
+      /**
+      * Save assistant response to history
+      */
       if (enableHistory && currentConvId) {
         const assistantHistoryRes = await fetch(
           `${API_URL}/history/conversations/${currentConvId}/messages`,
@@ -185,10 +195,7 @@ export function useChat({ enableHistory = false } = {}) {
         );
 
         if (!assistantHistoryRes.ok) {
-          console.error(
-            "No se pudo guardar la respuesta del asistente:",
-            assistantHistoryRes.status
-          );
+          console.error("No se pudo guardar la respuesta del asistente:", assistantHistoryRes.status);
         }
       }
 
@@ -222,38 +229,30 @@ export function useChat({ enableHistory = false } = {}) {
     }
   };
 
-  // ============================================================
-  // Reemplazar mensajes
-  // ============================================================
+  /**
+  * Replace the current messages
+  */
   const setConversationMessages = (newMessages) => {
-    setMessages(
-      Array.isArray(newMessages) ? newMessages : []
-    );
+    setMessages(Array.isArray(newMessages) ? newMessages : []);
   };
 
-  // ============================================================
-  // Limpiar conversación
-  // ============================================================
+  /**
+  * Clear the current conversation
+  */
   const clearMessages = () => {
     setMessages([]);
     setConversationId(null);
     setInput("");
   };
 
-  // ============================================================
-  // API pública del hook
-  // ============================================================
   return {
     messages,
     setMessages,
     setConversationMessages,
     clearMessages,
-
     input,
     setInput,
-
     loading,
-
     sendMessage,
     loadConversation,
   };

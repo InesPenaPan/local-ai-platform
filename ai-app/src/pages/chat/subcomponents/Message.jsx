@@ -1,13 +1,16 @@
 import { Bot, User } from "lucide-react";
 
-// ============================================================================
-// Message
-// ----------------------------------------------------------------------------
-// Renders an individual message within the chat interface. The layout, 
-// styling, and avatar rendered depend dynamically on whether the message 
-// belongs to the user or if it is the chat (assistant) responding.
-// ============================================================================
-
+/**
+ * Message component renders an individual chat bubble message with a distinct layout,
+ * styling, and avatar based on whether the message originates from the user or the AI assistant.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {Object} props.message - The message object containing its content and role
+ * @param {string} props.message.role - The sender role, expected to be either "user" or "assistant"
+ * @param {string} props.message.content - The text body of the message to be displayed
+ * @returns {JSX.Element} The rendered message bubble with appropriate alignment and styling
+ */
 export default function Message({ message }) {
   const isUser = message.role === "user";
 

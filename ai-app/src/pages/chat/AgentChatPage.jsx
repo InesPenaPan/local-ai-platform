@@ -3,8 +3,18 @@ import { Bot } from "lucide-react";
 
 import Message from "./subcomponents/Message";
 import PromptInput from "./subcomponents/PromptInput";
+import ChatEmptyState from "./subcomponents/ChatEmptyState";
 import { useChat } from "./hooks/useChat";
 
+/**
+ * AgentChatPage component renders an agent-specific chat interface, handling agent data fetching,
+ * RAG context enrichment for messages, automatic scrolling, and message submissions.
+ * 
+ * @component
+ * @param {Object} props - Component properties
+ * @param {Object} [props.agent] - The selected agent object containing details like name, model, system prompt, and RAG collection
+ * @returns {JSX.Element} The rendered agent chat layout container
+ */
 export default function AgentChatPage({ agent: selectedAgent }) {
   const [agent, setAgent] = useState(selectedAgent || null);
   const [input, setInput] = useState("");
@@ -19,7 +29,9 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     sendMessage: sendChatMessage,
   } = useChat();
 
-  // Load agent information from the API Gateway
+  /**
+   * Load the full agent configuration when the selected agent changes.
+   */
   useEffect(() => {
     if (!selectedAgent?.name) {
       setAgentLoading(false);
@@ -33,15 +45,11 @@ export default function AgentChatPage({ agent: selectedAgent }) {
         setAgentError(null);
 
         const response = await fetch(
-          `http://localhost:8000/api/v1/agent/agents/${encodeURIComponent(
-            selectedAgent.name
-          )}`
+          `http://localhost:8000/api/v1/agent/agents/${encodeURIComponent(selectedAgent.name)}`
         );
 
         if (!response.ok) {
-          throw new Error(
-            `Could not retrieve agent (${response.status})`
-          );
+          throw new Error(`Could not retrieve agent (${response.status})`);
         }
 
         const data = await response.json();
@@ -58,14 +66,16 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     fetchAgent();
   }, [selectedAgent]);
 
-  // Scroll to the bottom whenever messages or loading state changes
+  /**
+   * Keep the latest message visible when the chat changes.
+   */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Send message through useChat
+  /**
+   * Send message
+   */
   const handleSend = async (e) => {
     e.preventDefault();
 
@@ -77,7 +87,9 @@ export default function AgentChatPage({ agent: selectedAgent }) {
 
     let finalSystemPrompt = agent.systemPrompt || "";
 
-    // Retrieve RAG context if the agent has a collection
+    /**
+     * Retrieve additional context when the agent uses a RAG collection.
+     */
     if (agent.collection && agent.collection !== "none") {
       try {
         const searchRes = await fetch(
@@ -109,18 +121,10 @@ ${searchData.context}`;
           }
         }
       } catch (error) {
-        console.error(
-          "Error retrieving RAG context:",
-          error
-        );
+        console.error("Error retrieving RAG context:", error );
       }
     }
 
-    // useChat handles:
-    // - adding the user message
-    // - calling /llm/generate
-    // - adding the assistant message
-    // - loading state
     await sendChatMessage({
       content: trimmed,
       model: agent.model,
@@ -130,7 +134,9 @@ ${searchData.context}`;
     setInput("");
   };
 
-  // Show a loading state while retrieving the agent
+  /**
+  * Show a loading state while retrieving the agent configuration.
+  */
   if (agentLoading) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
@@ -138,16 +144,15 @@ ${searchData.context}`;
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-
-          <span className="ml-2">
-            Loading agent...
-          </span>
+          <span className="ml-2"> Loading agent... </span>
         </div>
       </div>
     );
   }
 
-  // Show an error state if the agent could not be loaded
+  /**
+  * Show an error when the agent could not be loaded.
+  */
   if (agentError || !agent) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
@@ -155,7 +160,6 @@ ${searchData.context}`;
           <p className="text-red-400 mb-2">
             {agentError || "Agent not found."}
           </p>
-
           <p className="text-sm text-slate-500">
             Make sure the agent exists and that the API Gateway is available.
           </p>
@@ -173,16 +177,15 @@ ${searchData.context}`;
           <div className="max-w-4xl mx-auto">
             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#080d17]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
 
-              {/* Decorative background glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#3b82f6]/15 blur-[50px] rounded-full pointer-events-none" />
-
               <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#DE145C]/15 blur-[50px] rounded-full pointer-events-none" />
 
-              {/* Agent information */}
+              {/* Agent name, description, and model information */}
               <div className="relative z-10 flex items-center p-5">
                 <div className="min-w-0 flex-1">
-
+                  
                   <div className="flex items-center gap-3">
+
                     <h1 className="text-lg font-semibold text-slate-100 tracking-wide truncate">
                       {agent.name}
                     </h1>
@@ -212,39 +215,21 @@ ${searchData.context}`;
           </div>
         </header>
 
-        {/* Chat messages area */}
+        {/* Scrollable chat messages area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
 
-          {/* Empty state */}
+          {/* Empty state shown before the first message */}
           {messages.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in pointer-events-none mt-16">
-
-              <div className="relative flex items-center justify-center">
-                <div className="absolute w-32 h-32 bg-[#3b82f6]/40 blur-[35px] -translate-x-6 rounded-full" />
-
-                <div className="absolute w-32 h-32 bg-[#DE145C]/40 blur-[35px] translate-x-6 rounded-full" />
-
-                <Bot
-                  size={65}
-                  strokeWidth={1.2}
-                  className="text-slate-200 relative z-10 drop-shadow-lg"
-                />
-              </div>
-
-              <div className="text-center relative z-10 mt-14">
-                <p className="text-lg font-medium text-slate-200 tracking-wide">
-                  Start a conversation with {agent.name}
-                </p>
-
-                <p className="text-sm text-slate-500 mt-2 max-w-md">
-                  Send a message below to interact with this agent.
-                </p>
-              </div>
-
+            <div className="absolute inset-0 flex items-center justify-center animate-fade-in pointer-events-none mt-10">
+              <ChatEmptyState
+                icon={Bot}
+                title="Start a conversation with the agent"
+                subtitle="Send a message below to interact with this agent."
+              />
             </div>
           )}
 
-          {/* Chat history */}
+          {/* Message list and loading indicator. */}
           <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-8 space-y-8 relative z-10 pb-24">
 
             {messages.map((msg, idx) => (
@@ -254,39 +239,27 @@ ${searchData.context}`;
               />
             ))}
 
-            {/* Loading indicator */}
             {loading && (
               <div className="flex gap-4 justify-start animate-fade-in">
 
                 <div className="w-9 h-9 flex items-center justify-center shrink-0 mt-1">
-                  <Bot
-                    size={22}
-                    strokeWidth={1.8}
-                    className="text-blue-300"
-                  />
+                  <Bot size={22} strokeWidth={1.8} className="text-blue-300"/>
                 </div>
 
                 <div className="bg-[#080d17] border border-[#3b82f6]/30 shadow-[0_4px_20px_rgba(59,130,246,0.1)] px-6 py-5 rounded-2xl rounded-tl-sm flex items-center gap-2">
-
                   <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce [animation-delay:-0.3s]" />
-
                   <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce [animation-delay:-0.15s]" />
-
                   <div className="w-2 h-2 bg-[#60a5fa] rounded-full animate-bounce" />
-
                 </div>
               </div>
             )}
 
-            <div
-              ref={messagesEndRef}
-              className="h-6"
-            />
+            <div ref={messagesEndRef} className="h-6"/>
 
           </div>
         </div>
 
-        {/* Bottom input area */}
+        {/* Input area for writing and submitting messages. */}
         <PromptInput
           input={input}
           setInput={setInput}
