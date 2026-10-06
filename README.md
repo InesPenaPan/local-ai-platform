@@ -53,7 +53,6 @@ Once your containers are fully initialized, you can interact with the platform t
 
 This repository uses a microservices architecture. Each service contains its own detailed `README.md` for specific configuration and development guidelines.
 
-``` text
 ```text
 local-ai-platform/
 │

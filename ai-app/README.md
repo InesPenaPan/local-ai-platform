@@ -1,6 +1,13 @@
 # 💻 AI Platform: Web Client
 
-> A modern, responsive conversational UI built with React, Vite, and Tailwind CSS to interact with the local AI platform via the API Gateway.
+> A modern, responsive conversational UI built with **React**, **Vite**, and **Tailwind CSS** to interact seamlessly with the local AI platform via the API Gateway.
+
+The frontend application provides a clean user interface that can:
+
+* Connect to the centralized API Gateway architecture
+* Manage dynamic conversation sessions and real-time chat interactions
+* Display structured responses from local AI agents and RAG microservices
+* Render fully responsive layouts styled with Tailwind CSS
 
 ## 📋 Prerequisites
 
@@ -21,6 +28,17 @@ npm run dev
 ```
 
 *The local development server will start at http://localhost:5173*
+
+
+## 📦 Main Dependencies
+
+The application relies on the following core tools and libraries:
+
+| Component | Purpose |
+| :--- | :--- |
+| **React** | Component-based UI library |
+| **Vite** | Lightning-fast frontend build tool and development server |
+| **Tailwind CSS** | Utility-first CSS framework for modern styling |
 
 ## 📁 Project Structure
 

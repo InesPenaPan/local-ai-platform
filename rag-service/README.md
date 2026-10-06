@@ -24,7 +24,7 @@ Before running this microservice, ensure you have the following installed and co
 
 
 
-## 🚀 Running the Microservice
+## 🚀 Running the Service
 
 In your project terminal (with the `venv` activated), start the Uvicorn server on port 8001:
 ```PowerShell

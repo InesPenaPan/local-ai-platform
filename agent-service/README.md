@@ -2,6 +2,13 @@
 
 > A lightweight, database-backed microservice built with FastAPI to manage, store, and retrieve custom AI agent configurations and their system instructions.
 
+The service provides a robust local database infrastructure that can:
+
+* Create and store custom AI agent configurations securely
+* Retrieve a complete list of all registered agents
+* Fetch detailed configurations for specific agents by name
+* Support modular CRUD operations via dedicated logic handlers
+
 ## 📋 Prerequisites
 
 Before running this individual microservice locally, ensure you have the following installed:
@@ -49,6 +56,23 @@ This endpoint receives the configuration details of a custom agent, saves it to 
 
 This endpoint fetches an array containing all the saved AI agents currently stored in the database.
 
+**Response Playload (`List[AgentResponse]`)**
+
+```JSON
+[
+  {
+    "id": 1,
+    "name": "DeutschBot",
+    "description": "Agente especializado en traducción instantánea al alemán.",
+    "systemPrompt": "Eres un traductor automático estricto...",
+    "model": "llama3.1",
+    "collection": "none",
+    "temperature": 0.7
+  }
+]
+```
+
+
 ### Endpoint 3: `GET /agent/{name}`
 
 This endpoint retrieves a specific agent's detailed configuration by searching for its exact name.
@@ -73,6 +97,17 @@ To quickly view all saved agents and their configurations (such as their exact `
 ```PowerShell
 python -c "import sqlite3, json; c=sqlite3.connect('agents.db'); c.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in c.execute('SELECT * FROM agents')], indent=2, ensure_ascii=False))"
 ```
+
+## 📦 Main Dependencies
+
+The service relies on the following main components:
+
+| Component | Purpose |
+| :--- | :--- |
+| **FastAPI** | HTTP API framework |
+| **Uvicorn** | ASGI application server |
+| **SQLAlchemy** | SQL toolkit and Object-Relational Mapping (ORM) |
+| **Pydantic** | Request/response validation |
 
 ## 📁 Project Structure
 
