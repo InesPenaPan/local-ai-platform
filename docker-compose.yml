@@ -52,7 +52,7 @@ services:
     ports:
       - "8004:8004"
     volumes:
-      - chat_history_storage:/app
+      - ./chat-history-service:/app  # <-- Cambiado a bind mount
     restart: always
     networks:
       - ai_network

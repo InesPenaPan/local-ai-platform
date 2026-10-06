@@ -7,7 +7,7 @@ import ChatEmptyState from "./subcomponents/ChatEmptyState";
 import Message from "./subcomponents/Message";
 import PromptInput from "./subcomponents/PromptInput";
 
-export default function ChatPage() {
+export default function ChatPage({ activeConversationId }) {
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState("llama3.1");
 
@@ -15,7 +15,9 @@ export default function ChatPage() {
     messages,
     loading,
     sendMessage,
-  } = useChat();
+    loadConversation,
+    clearMessages,
+  } = useChat({ enableHistory: true });
 
   const messagesEndRef = useRef(null);
 
@@ -25,10 +27,29 @@ export default function ChatPage() {
     });
   };
 
+  // ============================================================
+  // Cargar conversación seleccionada desde el historial
+  // ============================================================
+  useEffect(() => {
+    if (activeConversationId) {
+      loadConversation(activeConversationId);
+    } else {
+      // Si no hay conversación seleccionada,
+      // mostramos una conversación nueva/vacía.
+      clearMessages();
+    }
+  }, [activeConversationId]);
+
+  // ============================================================
+  // Scroll automático cuando cambian los mensajes
+  // ============================================================
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
 
+  // ============================================================
+  // Enviar mensaje
+  // ============================================================
   const handleSend = async (e) => {
     e.preventDefault();
 
@@ -48,10 +69,12 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
+
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
 
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
 
+          {/* Empty State */}
           {messages.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center animate-fade-in pointer-events-none mt-10">
               <ChatEmptyState
@@ -62,6 +85,7 @@ export default function ChatPage() {
             </div>
           )}
 
+          {/* Messages */}
           <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-12 space-y-8 relative z-10 pb-24">
 
             {messages.map((message, idx) => (
@@ -71,6 +95,7 @@ export default function ChatPage() {
               />
             ))}
 
+            {/* Loading / Typing Indicator */}
             {loading && (
               <div className="flex gap-4 justify-start animate-fade-in">
 
@@ -101,6 +126,7 @@ export default function ChatPage() {
           </div>
         </div>
 
+        {/* Prompt Input */}
         <PromptInput
           input={input}
           setInput={setInput}
@@ -114,4 +140,3 @@ export default function ChatPage() {
     </div>
   );
 }
-

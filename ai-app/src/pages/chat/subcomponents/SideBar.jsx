@@ -8,66 +8,94 @@ import {
 
 import NewButton from "./NewButton";
 
-// ============================================================================
-// Sidebar
-// ----------------------------------------------------------------------------
-// Displays the application's conversation actions and available agents.
-// Main application navigation is handled outside the sidebar.
-// ============================================================================
-
 export default function Sidebar({
   onNewConversation,
   onNewAgentClick,
   onSelectAgent,
+  onSelectConversation,
 }) {
   const [agents, setAgents] = useState([]);
+  const [pastConversations, setPastConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Mock past conversations
-  const pastConversations = [
-    {
-      id: 1,
-      title: "Building a React Dashboard",
-    },
-    {
-      id: 2,
-      title: "API Integration Help",
-    },
-  ];
-
-  // Fetch agents from the backend
   useEffect(() => {
-    const fetchAgents = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          "http://localhost:8000/api/v1/agents/list"
-        );
+        const [agentsRes, convRes] = await Promise.all([
+          fetch("http://localhost:8000/api/v1/agents/list"),
+          fetch("http://localhost:8000/api/v1/history/conversations"),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to load agents (${response.status})`
+        if (agentsRes.ok) {
+          const agentsData = await agentsRes.json();
+          setAgents(Array.isArray(agentsData) ? agentsData : []);
+        } else {
+          console.error(
+            `Failed to load agents (${agentsRes.status})`
           );
         }
 
-        const data = await response.json();
-
-        setAgents(Array.isArray(data) ? data : []);
+        if (convRes.ok) {
+          const convData = await convRes.json();
+          setPastConversations(Array.isArray(convData) ? convData : []);
+        } else {
+          console.error(
+            `Failed to load conversations (${convRes.status})`
+          );
+        }
       } catch (err) {
-        console.error("Error fetching agents:", err);
-
+        console.error("Error fetching data:", err);
         setError(err.message);
         setAgents([]);
+        setPastConversations([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAgents();
+    fetchData();
   }, []);
+
+  // ============================================================
+  // Seleccionar conversación
+  // ============================================================
+  const handleSelectConversation = (conversation) => {
+    console.log(
+      "SIDEBAR - Conversación seleccionada:",
+      conversation
+    );
+
+    console.log(
+      "SIDEBAR - ID:",
+      conversation?.id
+    );
+
+    if (!conversation?.id) {
+      console.error(
+        "SIDEBAR - La conversación no tiene ID:",
+        conversation
+      );
+      return;
+    }
+
+    if (typeof onSelectConversation !== "function") {
+      console.error(
+        "SIDEBAR - onSelectConversation no está definido"
+      );
+      return;
+    }
+
+    console.log(
+      "SIDEBAR - Enviando ID al App:",
+      conversation.id
+    );
+
+    onSelectConversation(conversation.id);
+  };
 
   return (
     <aside className="w-72 h-full bg-[#0b111c]/95 border-r border-white/5 flex flex-col p-5 select-none z-40">
@@ -80,24 +108,34 @@ export default function Sidebar({
         className="mt-10"
       />
 
-
       {/* Past Conversations */}
       <div className="mt-4 flex flex-col space-y-1">
+
         {pastConversations.map((conversation) => (
           <button
             key={conversation.id}
             type="button"
-            className="group flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 text-left"
+            onClick={() =>
+              handleSelectConversation(conversation)
+            }
+            className="group flex items-center gap-3 w-full min-w-0 py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 text-left cursor-pointer"
           >
             <div className="w-2 h-2 rounded-full bg-pink-500/40 group-hover:bg-pink-500 group-hover:shadow-[0_0_8px_rgba(236,72,153,0.6)] transition-all shrink-0" />
 
-            <span className="text-sm font-light text-slate-400 group-hover:text-white transition-colors truncate">
-              {conversation.title}
+            <span className="flex-1 min-w-0 text-sm font-light text-slate-400 group-hover:text-white transition-colors truncate">
+              {conversation.title || "Untitled conversation"}
             </span>
           </button>
         ))}
-      </div>
 
+        {!loading &&
+          !error &&
+          pastConversations.length === 0 && (
+            <div className="px-3 py-4 text-xs text-slate-500 font-light text-center">
+              No conversations yet.
+            </div>
+          )}
+      </div>
 
       {/* Agents Section */}
       <div className="mt-8 flex flex-col flex-1 min-h-0">
@@ -151,7 +189,14 @@ export default function Sidebar({
             agents.map((agent) => (
               <div
                 key={agent.id ?? agent.name}
-                onClick={() => onSelectAgent?.(agent)}
+                onClick={() => {
+                  console.log(
+                    "SIDEBAR - Agent seleccionado:",
+                    agent
+                  );
+
+                  onSelectAgent?.(agent);
+                }}
                 className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer shadow-sm"
               >
                 <div className="flex items-center gap-3 min-w-0">
