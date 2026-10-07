@@ -122,10 +122,7 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                     rows={6}
                     className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner resize-y font-light leading-relaxed"
                   />
-
-                  <p className="text-xs text-slate-500 mt-2 font-light">
-                    This defines the personality, boundaries, and specific rules the agent must follow.
-                  </p>
+                  
                 </div>
               </div>
 

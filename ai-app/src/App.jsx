@@ -76,6 +76,15 @@ export default function App() {
       setCurrentTab("chat");
     }
   };
+  
+  /**
+  * Handle deleting a conversation
+  */
+  const handleDeleteConversation = (conversation) => {
+    if (activeConversationId === conversation.id) {
+      setActiveConversationId(null); // Limpia la pantalla si borras el chat actual
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0f18] text-white">
@@ -94,6 +103,7 @@ export default function App() {
               setActiveConversationId(id);
               setCurrentTab("chat");
             }}
+            onDeleteConversation={handleDeleteConversation}
           />
         )}
 

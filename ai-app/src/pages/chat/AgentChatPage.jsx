@@ -135,22 +135,6 @@ ${searchData.context}`;
   };
 
   /**
-  * Show a loading state while retrieving the agent configuration.
-  */
-  if (agentLoading) {
-    return (
-      <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <span className="ml-2"> Loading agent... </span>
-        </div>
-      </div>
-    );
-  }
-
-  /**
   * Show an error when the agent could not be loaded.
   */
   if (agentError || !agent) {
@@ -159,9 +143,6 @@ ${searchData.context}`;
         <div className="text-center">
           <p className="text-red-400 mb-2">
             {agentError || "Agent not found."}
-          </p>
-          <p className="text-sm text-slate-500">
-            Make sure the agent exists and that the API Gateway is available.
           </p>
         </div>
       </div>

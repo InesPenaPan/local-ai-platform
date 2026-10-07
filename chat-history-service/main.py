@@ -62,3 +62,16 @@ def add_message_to_conversation(conversation_id: int, payload: MessageCreate, db
     db.commit()
     db.refresh(new_msg)
     return new_msg
+
+@app.delete("/conversations/{conversation_id}")
+def delete_conversation(conversation_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a conversation and all its associated messages.
+    """
+    conv = db.query(ConversationDB).filter(ConversationDB.id == conversation_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    db.delete(conv)
+    db.commit()
+    return {"ok": True, "message": "Conversation deleted successfully"}

@@ -359,3 +359,27 @@ async def proxy_add_message_to_conversation(conversation_id: int, payload: Messa
             status_code=exc.response.status_code,
             detail=f"Downstream chat-history-service error: {exc.response.text}"
         )
+
+@router.delete("/history/conversations/{conversation_id}")
+async def proxy_delete_conversation(conversation_id: int):
+    """
+    Forwards a request to delete a conversation to the chat-history-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.delete(
+                f"http://chat-history-service:8004/conversations/{conversation_id}"
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream chat-history-service is unreachable (port 8004 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream chat-history-service error: {exc.response.text}"
+        )
