@@ -18,6 +18,7 @@ import KnowledgePage from "./pages/knowledge/KnowledgePage";
 export default function App() {
   const [currentTab, setCurrentTab] = useState("chat");
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(null);
 
   const showSidebar = [
     "chat",
@@ -44,6 +45,7 @@ export default function App() {
   */
   const handleNewConversation = () => {
     setSelectedAgent(null);
+    setActiveConversationId(null);
     setCurrentTab("chat");
   };
 
@@ -88,6 +90,10 @@ export default function App() {
             onNewConversation={handleNewConversation}
             onNewAgentClick={handleNewAgent}
             onSelectAgent={handleSelectAgent}
+            onSelectConversation={(id) => {
+              setActiveConversationId(id);
+              setCurrentTab("chat");
+            }}
           />
         )}
 
@@ -96,7 +102,7 @@ export default function App() {
 
           {/* Normal chat */}
           {currentTab === "chat" && (
-            <ChatPage />
+            <ChatPage activeConversationId={activeConversationId} />
           )}
 
           {/* Create agent */}

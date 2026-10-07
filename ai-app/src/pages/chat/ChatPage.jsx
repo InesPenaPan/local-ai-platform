@@ -40,12 +40,13 @@ export default function ChatPage({ activeConversationId }) {
    * Load the selected conversation or clear the chat for a new one.
    */
   useEffect(() => {
-    if (activeConversationId) {
-      loadConversation(activeConversationId);
-    } else {
-      clearMessages();
-    }
-  }, [activeConversationId]);
+  if (activeConversationId) {
+    loadConversation(activeConversationId);
+  } else {
+    clearMessages();
+  }
+}, [activeConversationId]);
+  
 
   /**
    * Keep the latest message visible when messages or loading state changes.
