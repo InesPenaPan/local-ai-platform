@@ -88,24 +88,6 @@ export default function KnowledgePage() {
               />
             ))}
 
-            {/* Shortcut for creating a new collection */}
-            <div
-              onClick={handleNewModal}
-              className="border-2 border-dashed border-white/10 hover:border-[#3b82f6]/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all duration-300 bg-[#0a0f18]/30 hover:bg-[#0a0f18]/60 cursor-pointer group min-h-[220px]"
-            >
-              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 group-hover:text-[#3b82f6] group-hover:scale-110 transition-all mb-3">
-                <Plus size={22} strokeWidth={2} />
-              </div>
-
-              <p className="text-sm font-medium text-slate-300 tracking-wide">
-                Create New Collection
-              </p>
-
-              <p className="text-xs text-slate-500 font-light mt-1">
-                Upload and index a new dataset
-              </p>
-            </div>
-
           </div>
         )}
       </main>

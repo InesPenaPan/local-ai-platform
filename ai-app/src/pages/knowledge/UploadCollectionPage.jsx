@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UploadCloud, FileText, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 
 import FormWrapper from "../../components/layout/FormWrapper"; 
@@ -14,15 +14,36 @@ import FormWrapper from "../../components/layout/FormWrapper";
  * @returns {JSX.Element} The rendered upload collection page layout container
  */
 export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
-  const [collectionName, setCollectionName] = useState("");
+  const [collectionsList, setCollectionsList] = useState([]);
+  const [selectedCollection, setSelectedCollection] = useState("");
+  const [newCollectionName, setNewCollectionName] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   /**
-  * Handle file selection
-  */
+   * Fetch existing RAG collections from the backend on component mount.
+   */
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/v1/rag/collections");
+        if (response.ok) {
+          const data = await response.json();
+          setCollectionsList(Array.isArray(data) ? data : data.collections || []);
+        }
+      } catch (err) {
+        console.error("Error fetching collections:", err);
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
+  /**
+   * Handle file selection.
+   */
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
@@ -31,25 +52,29 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   };
 
   /**
-  * Validate form and upload document
-  */
+   * Validate form and upload document to the target collection.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!collectionName.trim()) {
-      setError("Please provide a collection name.");
+
+    const targetCollection = selectedCollection === "NEW_COLLECTION" ? newCollectionName.trim() : selectedCollection;
+
+    if (!targetCollection) {
+      setError("Please select or provide a collection name.");
       return;
     }
     if (!selectedFile) {
       setError("Please select a document (.pdf or .txt) to ingest.");
       return;
     }
+
     setLoading(true);
     setError("");
 
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("collection_name", collectionName);
+      formData.append("collection_name", targetCollection);
 
       const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
         method: "POST",
@@ -62,12 +87,12 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
 
       const data = await res.json();
       
-      setSuccessMessage(`Success! ${data.chunks_stored} chunks indexed.`);
+      setSuccessMessage(`Success! ${data.chunks_stored} chunks indexed into "${targetCollection}".`);
       
       setTimeout(() => {
         if (onCollectionCreated) {
           onCollectionCreated({
-            name: collectionName,
+            name: targetCollection,
             chunks: data.chunks_stored,
           });
         }
@@ -100,7 +125,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
             )}
             <div>
               <h1 className="text-2xl font-bold text-white tracking-wide">
-                Upload New Collection
+                Upload & Index Document
               </h1>
             </div>
           </div>
@@ -108,20 +133,47 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
           <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Collection name*/}
+              {/* Collection Selector */}
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
-                  Collection Name
+                  Target Collection
                 </label>
-                <input
-                  type="text"
-                  value={collectionName}
-                  onChange={(e) => setCollectionName(e.target.value)}
-                  placeholder="e.g., Financial Reports 2026"
+                <select
+                  value={selectedCollection}
+                  onChange={(e) => setSelectedCollection(e.target.value)}
                   disabled={loading}
-                  className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
-                />
+                  className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
+                >
+                  <option value="">-- Select a collection --</option>
+                  <option value="NEW_COLLECTION">+ Create New Collection</option>
+                  
+                  {collectionsList.map((col) => {
+                    const colName = typeof col === "string" ? col : col.name;
+                    return (
+                      <option key={colName} value={colName}>
+                        {colName} (Existing)
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
+
+              {/* Conditional input for New Collection Name */}
+              {selectedCollection === "NEW_COLLECTION" && (
+                <div className="animate-fade-in">
+                  <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
+                    New Collection Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCollectionName}
+                    onChange={(e) => setNewCollectionName(e.target.value)}
+                    placeholder="e.g., Financial-Reports-2026"
+                    disabled={loading}
+                    className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
+                  />
+                </div>
+              )}
 
               {/* File upload (Dropzone) */}
               <div>
