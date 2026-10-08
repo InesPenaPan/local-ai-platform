@@ -45,15 +45,27 @@ services:
     networks:
       - ai_network
 
-  # Chat History Service (Port 8004) - Almacena conversaciones y mensajes
+  # Chat History Service (Port 8004) 
   chat-history-service:
     build: ./chat-history-service
     container_name: chat_history_service
     ports:
       - "8004:8004"
     volumes:
-      - ./chat-history-service:/app  # <-- Cambiado a bind mount
+      - ./chat-history-service:/app
     restart: always
+    networks:
+      - ai_network
+
+  # Agent Service (Port 8003)
+  agent-service:
+    build: ./agent-service
+    container_name: agent-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./agent-service:/app
+    restart: unless-stopped
     networks:
       - ai_network
 
@@ -68,6 +80,7 @@ services:
       - RAG_SERVICE_URL=http://rag-service:8002
       - AGENT_SERVICE_URL=http://agent-service:8003
       - CHAT_HISTORY_SERVICE_URL=http://chat-history-service:8004
+      - MYSQL_MCP_URL=http://mysql-mcp:8080
     depends_on:
       - llm-service
       - rag-service
@@ -88,16 +101,22 @@ services:
     restart: always
     networks:
       - ai_network
-
-  # Agent Service (Port 8003)
-  agent-service:
-    build: ./agent-service
-    container_name: agent-service
+  
+  # MySQL MCP Service (Port 8080)
+  mysql-mcp:
+    build: ./mysql-mcp
+    container_name: mysql_mcp
     ports:
-      - "8003:8003"
-    volumes:
-      - ./agent-service:/app
-    restart: unless-stopped
+      - "8080:8080"
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - SERVER_PORT=8080
+      - ALLOW_ORIGINS=*
+    restart: always
     networks:
       - ai_network
 
@@ -108,3 +127,7 @@ volumes:
 networks:
   ai_network:
     driver: bridge
+
+
+
+  

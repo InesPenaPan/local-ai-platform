@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, MessageSquare } from "lucide-react";
+import { Bot, MessageSquare, Activity, Cpu, HardDrive } from "lucide-react";
 
 import { useChat } from "./hooks/useChat";
 
@@ -12,8 +12,8 @@ import PromptInput from "./subcomponents/PromptInput";
  * message streaming/loading states, automatic scroll behavior, and message submissions.
  * 
  * @component
- * @param {Object} props - Component properties
- * @param {string|null} [props.activeConversationId] - The ID of the currently selected conversation to load from history
+ * @param {Object} props Component properties
+ * @param {string|null} [props.activeConversationId] The ID of the currently selected conversation to load from history
  * @returns {JSX.Element} The rendered chat layout container
  */
 export default function ChatPage({ activeConversationId }) {
@@ -40,13 +40,12 @@ export default function ChatPage({ activeConversationId }) {
    * Load the selected conversation or clear the chat for a new one.
    */
   useEffect(() => {
-  if (activeConversationId) {
-    loadConversation(activeConversationId);
-  } else {
-    clearMessages();
-  }
-}, [activeConversationId]);
-  
+    if (activeConversationId) {
+      loadConversation(activeConversationId);
+    } else {
+      clearMessages();
+    }
+  }, [activeConversationId]);
 
   /**
    * Keep the latest message visible when messages or loading state changes.

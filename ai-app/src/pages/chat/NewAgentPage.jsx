@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, Settings2, Database, Sliders, Fingerprint, Loader2 } from "lucide-react";
+import { Save, Settings2, Database, Sliders, Fingerprint, Loader2, Wrench } from "lucide-react";
 
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
@@ -7,13 +7,13 @@ import { useCreateAgent } from "./hooks/useCreateAgent";
 
 /**
  * NewAgentPage component renders a form interface for creating and configuring
- * custom AI assistants, allowing users to define identity, system prompts, base LLM models,
+ * custom AI assistants, allowing users to define identity, system prompts, MCP tool integrations,
  * RAG knowledge bases, and temperature settings.
  * 
  * @component
- * @param {Object} props - Component properties
- * @param {function(): void} props.onCancel - Callback function triggered when the cancel button is clicked
- * @param {function(Object): void} props.onAgentCreated - Callback function triggered successfully after a new agent is created
+ * @param {Object} props Component properties
+ * @param {function(): void} props.onCancel Callback function triggered when the cancel button is clicked
+ * @param {function(Object): void} props.onAgentCreated Callback function triggered successfully after a new agent is created
  * @returns {JSX.Element} The rendered new agent creation page layout
  */
 export default function NewAgentPage({ onCancel, onAgentCreated }) {
@@ -57,7 +57,7 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
             <PageHeader
               title="New Agent"
-              subtitle="Define the identity, instructions, and knowledge base for your custom AI assistant."
+              subtitle="Define the identity, instructions, and tool integrations for your custom AI assistant."
             />
           </div>
 
@@ -98,7 +98,7 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="e.g., Code Reviewer, Chef Bot"
+                      placeholder="e.g., Code Reviewer, Database Assistant"
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner"
                     />
                   </div>
@@ -140,7 +140,7 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                     required
                     value={formData.systemPrompt}
                     onChange={handleChange}
-                    placeholder="You are an expert copywriter. Your goal is to..."
+                    placeholder="You are an expert assistant. Your goal is to..."
                     rows={6}
                     className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none transition-all shadow-inner resize-y font-light leading-relaxed"
                   />
@@ -148,20 +148,20 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                 </div>
               </div>
 
-              {/* Model and knowledge base configuration */}
+              {/* MCP tools and knowledge base configuration */}
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
                   <Database size={16} className="text-emerald-400"/>
                   <h2 className="text-sm font-semibold uppercase tracking-wider">
-                    Knowledge & Engine
+                    Knowledge & Tools
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
-                      Base LLM Model
+                    <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                      <Wrench size={14} /> Attach Tool (MCP)
                     </label>
 
                     <select
@@ -170,8 +170,9 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                       onChange={handleChange}
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
                     >
-                      <option value="llama3.1"> Llama 3.1 (Recommended) </option>
-                      <option value="mistral"> Mistral </option>
+                      <option value="none"> No tools attached </option>
+                      <option value="mysql-mcp"> MySQL Database </option>
+                      <option value="github-mcp"> GitHub Repository </option>
                     </select>
                   </div>
 

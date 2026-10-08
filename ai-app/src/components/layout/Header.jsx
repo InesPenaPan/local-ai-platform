@@ -1,4 +1,4 @@
-import { MessageSquare, Database, Settings } from "lucide-react";
+import { MessageSquare, Database, Wrench } from "lucide-react";
 
 import UserMenu from "./UserMenu";
 
@@ -34,9 +34,9 @@ export default function Header({ currentTab, onSelectTab }) {
       icon: Database,
     },
     {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
+      id: "tools",
+      label: "Tools",
+      icon: Wrench,
     },
   ];
 

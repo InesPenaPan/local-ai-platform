@@ -383,3 +383,30 @@ async def proxy_delete_conversation(conversation_id: int):
             status_code=exc.response.status_code,
             detail=f"Downstream chat-history-service error: {exc.response.text}"
         )
+
+@router.get("/mcp/system-metrics")
+async def proxy_system_metrics():
+    """
+    Fetches real-time system metrics from the computer
+    """
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get("http://system-mcp:8005/metrics")
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream system-mcp service is unreachable."
+        )
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The system-mcp service took too long to respond."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream system-mcp service error: {exc.response.text}"
+        )

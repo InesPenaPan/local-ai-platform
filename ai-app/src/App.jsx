@@ -7,6 +7,7 @@ import ChatPage from "./pages/chat/ChatPage";
 import NewAgentPage from "./pages/chat/NewAgentPage";
 import AgentChatPage from "./pages/chat/AgentChatPage";
 import KnowledgePage from "./pages/knowledge/KnowledgePage";
+import ToolsPage from "./pages/tools/ToolsPage";
 
 /**
  * App component acts as the root application container, managing global navigation tabs,
@@ -137,10 +138,8 @@ export default function App() {
           )}
 
           {/* Settings */}
-          {currentTab === "settings" && (
-            <div className="flex items-center justify-center h-full text-slate-400">
-              <p>Settings View</p>
-            </div>
+          {currentTab === "tools" && (
+            <ToolsPage />
           )}
 
         </main>

@@ -4,6 +4,7 @@ import { Bot } from "lucide-react";
 import Message from "./subcomponents/Message";
 import PromptInput from "./subcomponents/PromptInput";
 import ChatEmptyState from "./subcomponents/ChatEmptyState";
+import AgentCard from "./subcomponents/AgentCard";
 import { useChat } from "./hooks/useChat";
 
 /**
@@ -11,8 +12,8 @@ import { useChat } from "./hooks/useChat";
  * RAG context enrichment for messages, automatic scrolling, and message submissions.
  * 
  * @component
- * @param {Object} props - Component properties
- * @param {Object} [props.agent] - The selected agent object containing details like name, model, system prompt, and RAG collection
+ * @param {Object} props Component properties
+ * @param {Object} [props.agent] The selected agent object containing details like name, model, system prompt, and RAG collection
  * @returns {JSX.Element} The rendered agent chat layout container
  */
 export default function AgentChatPage({ agent: selectedAgent }) {
@@ -88,7 +89,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     let finalSystemPrompt = agent.systemPrompt || "";
 
     /**
-     * Retrieve additional context when the agent uses a RAG collection.
+     * Retrieve additional context when the agent uses a RAG collection[cite: 2].
      */
     if (agent.collection && agent.collection !== "none") {
       try {
@@ -125,6 +126,16 @@ ${searchData.context}`;
       }
     }
 
+    /**
+     * Inject MCP context instructions if the agent has a tool attached.
+     */
+    const activeTool = agent.mcp || agent.model;
+    if (activeTool === "mysql-mcp") {
+      finalSystemPrompt += `\n\n### MCP TOOL: MySQL Database ###\nYou have access to the MySQL Database MCP. Query tables and schemas safely when needed to answer the user request.`;
+    } else if (activeTool === "github-mcp") {
+      finalSystemPrompt += `\n\n### MCP TOOL: GitHub Repository ###\nYou have access to the GitHub Repository MCP. Inspect code and check files when needed to answer the user request.`;
+    }
+
     await sendChatMessage({
       content: trimmed,
       model: agent.model,
@@ -153,48 +164,8 @@ ${searchData.context}`;
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
 
-        {/* Agent information header */}
-        <header className="shrink-0 px-6 pt-6 relative z-20">
-          <div className="max-w-4xl mx-auto">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#080d17]/90 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
-
-              <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#3b82f6]/15 blur-[50px] rounded-full pointer-events-none" />
-              <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[#DE145C]/15 blur-[50px] rounded-full pointer-events-none" />
-
-              {/* Agent name, description, and model information */}
-              <div className="relative z-10 flex items-center p-5">
-                <div className="min-w-0 flex-1">
-                  
-                  <div className="flex items-center gap-3">
-
-                    <h1 className="text-lg font-semibold text-slate-100 tracking-wide truncate">
-                      {agent.name}
-                    </h1>
-
-                    <span className="px-2.5 py-1 rounded-md bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[11px] font-medium text-blue-300 uppercase tracking-wider">
-                      Agent
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-slate-400 mt-1.5 leading-relaxed line-clamp-2">
-                    {agent.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[11px] text-slate-500 uppercase tracking-wider">
-                      Model
-                    </span>
-
-                    <span className="text-[11px] text-slate-300 font-medium">
-                      {agent.model}
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        {/* Agent information card component */}
+        <AgentCard agent={agent} />
 
         {/* Scrollable chat messages area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
@@ -254,4 +225,3 @@ ${searchData.context}`;
     </div>
   );
 }
-
