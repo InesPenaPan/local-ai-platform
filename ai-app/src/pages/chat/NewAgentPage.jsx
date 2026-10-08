@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Save, Settings2, Database, Sliders, Fingerprint, Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/ui/PageHeader";
@@ -24,6 +25,27 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
     handleChange,
     handleSubmit,
   } = useCreateAgent({ onAgentCreated });
+
+  const [collectionsList, setCollectionsList] = useState([]);
+
+  /**
+   * Fetch available RAG collections.
+   */
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/v1/rag/collections");
+        if (response.ok) {
+          const data = await response.json();
+          setCollectionsList(Array.isArray(data) ? data : data.collections || []);
+        }
+      } catch (err) {
+        console.error("Error fetching collections:", err);
+      }
+    };
+
+    fetchCollections();
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
@@ -165,8 +187,15 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                       className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
                     >
                       <option value="none"> No external knowledge </option>
-                      <option value="recetas-familiares"> Recetas Familiares </option>
-                      <option value="hr-policies"> Corporate HR Policies </option>
+                      
+                      {collectionsList.map((col) => {
+                        const colName = typeof col === "string" ? col : col.name;
+                        return (
+                          <option key={colName} value={colName}>
+                            {colName}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>
