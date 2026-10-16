@@ -6,31 +6,36 @@ import mysqlLogo from "../../assets/mysql-logo.png";
 
 /**
  * ToolsPage component serves as the configuration dashboard for managing
- * and toggling mocked external Model Context Protocol (MCP) servers and tools.
+ * and toggling external Model Context Protocol (MCP) servers and tools.
  * 
  * @component
  * @returns {JSX.Element} The rendered Tools settings dashboard container
  */
 export default function ToolsPage() {
-  // Mock data for MCP servers containing GitHub and MySQL MCPs with custom logo images
   const [mcps, setMcps] = useState([
-    {
-      id: "github-mcp",
-      name: "GitHub Repository MCP",
-      description: "Enables code inspection, file searching, and issue tracking across connected codebases.",
-      status: "online",
-      enabled: false,
-      isImage: true,
-      iconSrc: githubLogo
-    },
     {
       id: "mysql-mcp",
       name: "MySQL Database MCP",
-      description: "Allows querying schemas and executing safe read-only SQL statements on relational databases.",
+      description: "Connects your AI agent directly to live business databases to fetch accurate customer information, inspect relational tables, and update records securely.",
+      details: "This integration acts as an intelligent bridge between the AI model and your production database. Instead of guessing or hallucinating facts, the assistant translates everyday questions into precise SQL queries. It automatically inspects table schemas to understand column names and relationships, runs live searches to extract exact records, and can modify or insert new business data without requiring users to write a single line of SQL.",
+      connectedResource: "Linked to the internal MySQL database instance serving the local 'crm' environment (active customer accounts, lead interaction histories, commercial deal stages, purchase orders, and support tickets).",
+      capabilities: "Discover database structure and available tables (list_tables), inspect column data types and constraints (describe_table), run real-time search queries and aggregations (read_query / SELECT), and execute transactional changes or data entry (write_query / INSERT, UPDATE, DELETE).",
       status: "online",
       enabled: false,
       isImage: true,
       iconSrc: mysqlLogo
+    },
+    {
+      id: "github-mcp",
+      name: "GitHub Repository MCP",
+      description: "Empowers the AI to explore software projects, analyze source code across branches, review past commit histories, and manage team task backlogs.",
+      details: "Bridges your AI assistant with your software repositories to serve as an autonomous coding partner. It navigates repository folder structures, reads specific implementation files, tracks down bug causes across the codebase, and checks open pull requests or issue tickets to help developers troubleshoot problems, review code logic, and keep track of project development milestones.",
+      connectedResource: "Linked to targeted application workspaces, version control tracking systems, Git branches, pull request workflows, and repository issue boards.",
+      capabilities: "Examine file contents and implementation logic (read_file), browse past code changes and author logs (list_commits), search for keywords and function definitions across code trees (search_code), inspect bug reports and feature requests (get_issue), and list active branch configurations (list_branches).",
+      status: "online",
+      enabled: false,
+      isImage: true,
+      iconSrc: githubLogo
     }
   ]);
 

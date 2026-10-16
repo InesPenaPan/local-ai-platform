@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { MessageSquarePlus, Bot, Trash2, Loader2 } from "lucide-react";
 
 import NewButton from "./NewButton";
-import useDeleteAgent from "../hooks/useDeleteAgent";
-import useDeleteConversation from "../hooks/useDeleteConversation";
+import useDeleteAgent from "./../hooks/useDeleteAgent";
+import useDeleteChat from "./../hooks/useDeleteChat";
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 const AGENTS_LIST_ENDPOINT = `${API_BASE_URL}/agents/list`;
@@ -80,7 +80,7 @@ function SidebarItem({ item, type, onClick, onAction }) {
  * @param {() => void} props.onNewAgentClick Callback triggered to open the creation flow for a new agent
  * @param {(agent: Object) => void} [props.onSelectAgent] Callback triggered when an agent is selected
  * @param {(conversationId: string | number) => void} [props.onSelectConversation] Callback triggered when a past conversation is selected
- * @param {(conversation: Object) => void} [props.onDeleteConversation] Callback triggered when deleting a past conversation
+ * @param {(conversation: Object) => void} [props.onDeleteChat] Callback triggered when deleting a past conversation
  * @param {(agent: Object) => void} [props.onDeleteAgent] Callback triggered when deleting an agent
  * @returns {JSX.Element} The rendered sidebar navigation drawer
  */
@@ -89,7 +89,7 @@ export default function Sidebar({
   onNewAgentClick,
   onSelectAgent,
   onSelectConversation,
-  onDeleteConversation,
+  onDeleteChat,
   onDeleteAgent,
 }) {
   const [agents, setAgents] = useState([]);
@@ -102,11 +102,11 @@ export default function Sidebar({
     onDeleteAgent?.(deletedAgent);
   });
 
-  const { deleteConversation } = useDeleteConversation((deletedConversation) => {
+  const { deleteChat } = useDeleteChat((deletedChat) => {
     setPastConversations((prev) =>
-      prev.filter((conv) => conv.id !== deletedConversation.id)
+      prev.filter((conv) => conv.id !== deletedChat.id)
     );
-    onDeleteConversation?.(deletedConversation);
+    onDeleteChat?.(deletedChat);
   });
 
   /**
@@ -196,7 +196,7 @@ export default function Sidebar({
             item={conversation}
             type="conversation"
             onClick={() => handleSelectConversation(conversation)}
-            onAction={deleteConversation}
+            onAction={deleteChat}
           />
         ))}
 

@@ -5,6 +5,9 @@ import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
 import { useCreateAgent } from "./hooks/useCreateAgent";
 
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const RAG_COLLECTIONS_ENDPOINT = `${API_BASE_URL}/rag/collections`;
+
 /**
  * NewAgentPage component renders a form interface for creating and configuring
  * custom AI assistants, allowing users to define identity, system prompts, MCP tool integrations,
@@ -34,7 +37,7 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/rag/collections");
+        const response = await fetch(RAG_COLLECTIONS_ENDPOINT);
         if (response.ok) {
           const data = await response.json();
           setCollectionsList(Array.isArray(data) ? data : data.collections || []);

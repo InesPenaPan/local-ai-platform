@@ -1,26 +1,39 @@
 import { useState, useEffect } from "react";
 import { UploadCloud, FileText, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 
-import FormWrapper from "../../components/layout/FormWrapper"; 
+import FormWrapper from "../../components/layout/FormWrapper";
+import useUploadDocument from "./hooks/useUploadDocument";
+
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const RAG_COLLECTIONS_ENDPOINT = `${API_BASE_URL}/rag/collections`;
+const NEW_COLLECTION_VALUE = "NEW_COLLECTION";
 
 /**
  * UploadCollectionPage component renders a form interface for uploading and indexing
  * document files (.pdf or .txt) into a new Qdrant vector collection via the API gateway.
  * 
  * @component
- * @param {Object} props - Component properties
- * @param {function(): void} [props.onBack] - Optional callback function triggered to return to the previous view
- * @param {function(Object): void} [props.onCollectionCreated] - Optional callback function triggered after successful collection indexing
+ * @param {Object} props Component properties
+ * @param {function(): void} [props.onBack] Optional callback function triggered to return to the previous view
+ * @param {function(Object): void} [props.onCollectionCreated] Optional callback function triggered after successful collection indexing
  * @returns {JSX.Element} The rendered upload collection page layout container
  */
 export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   const [collectionsList, setCollectionsList] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState("");
   const [newCollectionName, setNewCollectionName] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+
+  const {
+    selectedFile,
+    loading,
+    error,
+    successMessage,
+    handleFileChange,
+    uploadDocument,
+  } = useUploadDocument({
+    onSuccess: onCollectionCreated,
+    onComplete: onBack,
+  });
 
   /**
    * Fetch existing RAG collections from the backend on component mount.
@@ -28,7 +41,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/rag/collections");
+        const response = await fetch(RAG_COLLECTIONS_ENDPOINT);
         if (response.ok) {
           const data = await response.json();
           setCollectionsList(Array.isArray(data) ? data : data.collections || []);
@@ -42,68 +55,17 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
   }, []);
 
   /**
-   * Handle file selection.
-   */
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      setError("");
-    }
-  };
-
-  /**
-   * Validate form and upload document to the target collection.
+   * Handle form submission by delegating upload execution to the hook.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const targetCollection = selectedCollection === "NEW_COLLECTION" ? newCollectionName.trim() : selectedCollection;
+    const targetCollection =
+      selectedCollection === NEW_COLLECTION_VALUE
+        ? newCollectionName.trim()
+        : selectedCollection;
 
-    if (!targetCollection) {
-      setError("Please select or provide a collection name.");
-      return;
-    }
-    if (!selectedFile) {
-      setError("Please select a document (.pdf or .txt) to ingest.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("collection_name", targetCollection);
-
-      const res = await fetch("http://localhost:8000/api/v1/rag/upload-document", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error(`API Gateway returned status: ${res.status}`);
-      }
-
-      const data = await res.json();
-      
-      setSuccessMessage(`Success! ${data.chunks_stored} chunks indexed into "${targetCollection}".`);
-      
-      setTimeout(() => {
-        if (onCollectionCreated) {
-          onCollectionCreated({
-            name: targetCollection,
-            chunks: data.chunks_stored,
-          });
-        }
-        if (onBack) onBack();
-      }, 1500);
-
-    } catch (err) {
-      setError("Failed to connect to API Gateway (Port 8000). Make sure Docker containers are running.");
-    } finally {
-      setLoading(false);
-    }
+    await uploadDocument(targetCollection);
   };
 
   return (
@@ -145,7 +107,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                   className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
                 >
                   <option value="">-- Select a collection --</option>
-                  <option value="NEW_COLLECTION">+ Create New Collection</option>
+                  <option value={NEW_COLLECTION_VALUE}>+ Create New Collection</option>
                   
                   {collectionsList.map((col) => {
                     const colName = typeof col === "string" ? col : col.name;
@@ -159,7 +121,7 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
               </div>
 
               {/* Conditional input for New Collection Name */}
-              {selectedCollection === "NEW_COLLECTION" && (
+              {selectedCollection === NEW_COLLECTION_VALUE && (
                 <div className="animate-fade-in">
                   <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
                     New Collection Name
@@ -180,11 +142,13 @@ export default function UploadCollectionPage({ onBack, onCollectionCreated }) {
                 <label className="block text-xs font-medium text-slate-300 mb-2 uppercase tracking-wider">
                   Source Document (.pdf or .txt)
                 </label>
-                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer ${
-                  selectedFile 
-                    ? "border-[#3b82f6]/50 bg-[#3b82f6]/5" 
-                    : "border-white/10 hover:border-[#DE145C]/50 bg-[#04070c]"
-                }`}>
+                <label
+                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer ${
+                    selectedFile 
+                      ? "border-[#3b82f6]/50 bg-[#3b82f6]/5" 
+                      : "border-white/10 hover:border-[#DE145C]/50 bg-[#04070c]"
+                  }`}
+                >
                   <input
                     type="file"
                     accept=".pdf,.txt"

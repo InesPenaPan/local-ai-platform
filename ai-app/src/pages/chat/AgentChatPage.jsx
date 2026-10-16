@@ -7,6 +7,18 @@ import ChatEmptyState from "./subcomponents/ChatEmptyState";
 import AgentCard from "./subcomponents/AgentCard";
 import { useChat } from "./hooks/useChat";
 
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const RAG_SEARCH_ENDPOINT = `${API_BASE_URL}/rag/search`;
+const AGENT_DETAILS_ENDPOINT = (name) => `${API_BASE_URL}/agent/agents/${encodeURIComponent(name)}`;
+const AGENT_CHAT_ENDPOINT = (name) => `${API_BASE_URL}/agent/${encodeURIComponent(name)}/chat`;
+
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
+
+const MCP_TOOL_MYSQL = "mysql-mcp";
+const DEFAULT_TOP_K = 3;
+
 /**
  * AgentChatPage component renders an agent-specific chat interface, handling agent data fetching,
  * RAG context enrichment for messages, automatic scrolling, and message submissions.
@@ -37,8 +49,8 @@ export default function AgentChatPage({ agent: selectedAgent }) {
   /**
    * Determine whether to use standard hook messages or local state for MCP-driven chats.
    */
-  const activeTool = agent?.mcp || (agent?.model === "mysql-mcp" ? "mysql-mcp" : null);
-  const isMcpAgent = activeTool === "mysql-mcp";
+  const activeTool = agent?.mcp || (agent?.model === MCP_TOOL_MYSQL ? MCP_TOOL_MYSQL : null);
+  const isMcpAgent = activeTool === MCP_TOOL_MYSQL;
   const messages = isMcpAgent ? localMessages : hookMessages;
   const loading = isMcpAgent ? mcpLoading : hookLoading;
 
@@ -46,7 +58,6 @@ export default function AgentChatPage({ agent: selectedAgent }) {
    * Load the full agent configuration and reset chat history when the selected agent changes.
    */
   useEffect(() => {
-    // Limpiar el historial tanto de MCP como del hook general al cambiar de agente
     setLocalMessages([]);
     setInput("");
     if (typeof clearMessages === "function") {
@@ -66,9 +77,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
         setAgentLoading(true);
         setAgentError(null);
 
-        const response = await fetch(
-          `http://localhost:8000/api/v1/agent/agents/${encodeURIComponent(selectedAgent.name)}`
-        );
+        const response = await fetch(AGENT_DETAILS_ENDPOINT(selectedAgent.name));
 
         if (!response.ok) {
           throw new Error(`Could not retrieve agent (${response.status})`);
@@ -116,22 +125,17 @@ export default function AgentChatPage({ agent: selectedAgent }) {
       setMcpLoading(true);
 
       try {
-        const response = await fetch(
-          `http://localhost:8000/api/v1/agent/${encodeURIComponent(agent.name)}/chat`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              prompt: trimmed,
-              history: localMessages.map((m) => ({
-                role: m.role || (m.sender === "user" ? "user" : "assistant"),
-                content: m.content || m.text,
-              })),
-            }),
-          }
-        );
+        const response = await fetch(AGENT_CHAT_ENDPOINT(agent.name), {
+          method: "POST",
+          headers: JSON_HEADERS,
+          body: JSON.stringify({
+            prompt: trimmed,
+            history: localMessages.map((m) => ({
+              role: m.role || (m.sender === "user" ? "user" : "assistant"),
+              content: m.content || m.text,
+            })),
+          }),
+        });
 
         if (!response.ok) {
           throw new Error(`MCP agent error (${response.status})`);
@@ -159,20 +163,15 @@ export default function AgentChatPage({ agent: selectedAgent }) {
      */
     if (agent.collection && agent.collection !== "none") {
       try {
-        const searchRes = await fetch(
-          "http://localhost:8000/api/v1/rag/search",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              query: trimmed,
-              collection_name: agent.collection,
-              top_k: 3,
-            }),
-          }
-        );
+        const searchRes = await fetch(RAG_SEARCH_ENDPOINT, {
+          method: "POST",
+          headers: JSON_HEADERS,
+          body: JSON.stringify({
+            query: trimmed,
+            collection_name: agent.collection,
+            top_k: DEFAULT_TOP_K,
+          }),
+        });
 
         if (searchRes.ok) {
           const searchData = await searchRes.json();
