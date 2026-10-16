@@ -1,8 +1,11 @@
 import { useState } from "react";
 
-const API_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
 
-const initialFormData = {
+const INITIAL_FORM_DATA = {
   name: "",
   description: "",
   systemPrompt: "",
@@ -30,7 +33,7 @@ const initialFormData = {
  * @returns {function(): void} returns.resetForm - Resets form state, error status, and success state to initial values
  */
 export function useCreateAgent({ onAgentCreated } = {}) {
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(false);
@@ -56,12 +59,10 @@ export function useCreateAgent({ onAgentCreated } = {}) {
 
     try {
       const response = await fetch(
-        `${API_URL}/agents/create-agent`,
+        `${API_BASE_URL}/agents/create-agent`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: JSON_HEADERS,
           body: JSON.stringify(formData),
         }
       );
@@ -74,7 +75,7 @@ export function useCreateAgent({ onAgentCreated } = {}) {
       const result = await response.json();
 
       setSuccessMessage(true);
-      setFormData(initialFormData);
+      setFormData(INITIAL_FORM_DATA);
 
       if (onAgentCreated) {
         onAgentCreated(result);
@@ -102,7 +103,7 @@ export function useCreateAgent({ onAgentCreated } = {}) {
   };
 
   const resetForm = () => {
-    setFormData(initialFormData);
+    setFormData(INITIAL_FORM_DATA);
     setError(null);
     setSuccessMessage(false);
   };

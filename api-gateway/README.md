@@ -35,6 +35,7 @@ Thee Gateway routes incoming client traffic to targeted downstream microservices
 | **`GET`** | `/agents/list` | `agent-service:8003` | Retrieves all registered AI agent configurations. |
 | **`GET`** | `/agents/agents/{name}` | `agent-service:8003` | Fetches a specific agent's configuration by name. |
 | **`POST`** | `/agents/agent/{name}/chat` | `agent-service:8003` | Proxies chat sessions to an agent, coordinating multi-turn MCP tool loops. |
+| **`DELETE`** | `/agents/{agent_id}` | `agent-service:8003` | Deletes an existing agent configuration by ID. |
 | **`GET`** | `/history/conversations` | `chat-history-service:8004` | Retrieves all saved conversation sessions. |
 | **`POST`** | `/history/conversations` | `chat-history-service:8004` | Initializes a new persistent conversation session. |
 | **`GET`** | `/history/conversations/{id}/messages` | `chat-history-service:8004` | Fetches all stored messages belonging to a conversation. |

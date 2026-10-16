@@ -25,3 +25,17 @@ def get_agent_by_name(db: Session, name: str):
     """
     from main import AgentDB
     return db.query(AgentDB).filter(AgentDB.name == name).first()
+
+def delete_agent_by_id(db: Session, agent_id: int):
+    """
+    Deletes an existing agent from the database by its unique identifier.
+    Returns True if successfully deleted, False if the agent was not found.
+    """
+    from main import AgentDB
+    db_agent = db.query(AgentDB).filter(AgentDB.id == agent_id).first()
+    if not db_agent:
+        return False
+
+    db.delete(db_agent)
+    db.commit()
+    return True

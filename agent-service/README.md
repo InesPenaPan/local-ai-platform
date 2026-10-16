@@ -86,7 +86,7 @@ Fetches the configuration specifications of an individual agent by its unique re
 }
 ```
 
-### Endpoint 4: `GET /agent/{name}/chat`
+### Endpoint 4: `POST /agent/{name}/chat`
 
 Executes an interactive reasoning loop with the target agent. If the agent is assigned an optional MCP integration (e.g., a database or search connector), the engine dynamically discovers the provider's capabilities, invokes tools via structured function calling, and delivers an objective synthesis.
 
@@ -104,6 +104,19 @@ Executes an interactive reasoning loop with the target agent. If the agent is as
   "reply": "Hello! I can analyze information, answer questions, and utilize connected tools to perform real-time actions."
 }
 ```
+
+### Endpoint 5: `GET /agent/{agent_id}`
+
+Deletes an existing agent configuration from the database by its unique identifier.
+
+**Response Payload**
+
+```json
+{
+  "message": "Agent deleted successfully"
+}
+
+
 
 ## 🗄️ Inspecting the Database
 

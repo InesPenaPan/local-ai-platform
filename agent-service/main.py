@@ -103,3 +103,18 @@ async def chat_with_agent(name: str, payload: AgentChatRequest, db: Session = De
 
     reply = await execute_agent_chat(agent, payload.prompt, payload.history)
     return {"reply": reply}
+
+
+@app.delete("/agent/{agent_id}")
+def delete_agent(agent_id: int, db: Session = Depends(get_db)):
+    """
+    Deletes an agent configuration matching the specified ID.
+    Raises a 404 HTTP exception if the agent does not exist.
+    """
+    success = agent_logic.delete_agent_by_id(db, agent_id)
+    if not success:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Agent with ID '{agent_id}' not found"
+        )
+    return {"message": "Agent deleted successfully"}

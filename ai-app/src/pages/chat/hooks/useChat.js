@@ -1,7 +1,11 @@
-
 import { useState } from "react";
 
-const API_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const DEFAULT_MODEL = "llama3.1";
+const TITLE_MAX_LENGTH = 30;
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
 
 /**
  * useChat custom hook manages chat state, conversation history persistence,
@@ -28,19 +32,19 @@ export function useChat({ enableHistory = false } = {}) {
   const [conversationId, setConversationId] = useState(null);
 
   /**
-  * Load an existing conversation
-  */
+   * Load an existing conversation
+   */
   const loadConversation = async (id) => {
     if (!id) return;
     setLoading(true);
 
     try {
       const response = await fetch(
-        `${API_URL}/history/conversations/${id}/messages`
+        `${API_BASE_URL}/history/conversations/${id}/messages`
       );
 
       if (!response.ok) {
-        throw new Error(`No se pudieron cargar los mensajes (${response.status})`);
+        throw new Error(`Failed to load messages (${response.status})`);
       }
 
       const data = await response.json();
@@ -48,7 +52,7 @@ export function useChat({ enableHistory = false } = {}) {
       setMessages(Array.isArray(data) ? data : []);
       setConversationId(id);
     } catch (error) {
-      console.error("Error cargando la conversación:", error);
+      console.error("Error loading conversation:", error);
       setMessages([]);
     } finally {
       setLoading(false);
@@ -56,11 +60,11 @@ export function useChat({ enableHistory = false } = {}) {
   };
 
   /**
-  * Send a message to the backend
-  */
+   * Send a message to the backend
+   */
   const sendMessage = async ({
     content,
-    model = "llama3.1",
+    model = DEFAULT_MODEL,
     systemPrompt = "",
   }) => {
     const trimmed = content?.trim();
@@ -84,22 +88,19 @@ export function useChat({ enableHistory = false } = {}) {
 
     try {
       if (enableHistory) {
-
         /**
-        * Create conversation and save user message
-        */
+         * Create conversation and save user message
+         */
         if (!currentConvId) {
           const convRes = await fetch(
-            `${API_URL}/history/conversations`,
+            `${API_BASE_URL}/history/conversations`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: JSON_HEADERS,
               body: JSON.stringify({
                 title:
-                  trimmed.length > 30
-                    ? `${trimmed.substring(0, 30)}...`
+                  trimmed.length > TITLE_MAX_LENGTH
+                    ? `${trimmed.substring(0, TITLE_MAX_LENGTH)}...`
                     : trimmed,
               }),
             }
@@ -107,7 +108,7 @@ export function useChat({ enableHistory = false } = {}) {
 
           if (!convRes.ok) {
             throw new Error(
-              `No se pudo crear la conversación (${convRes.status})`
+              `Failed to create conversation (${convRes.status})`
             );
           }
 
@@ -119,16 +120,14 @@ export function useChat({ enableHistory = false } = {}) {
         }
 
         /**
-        * Save the user message to history
-        */
+         * Save the user message to history
+         */
         if (currentConvId) {
           const userHistoryRes = await fetch(
-            `${API_URL}/history/conversations/${currentConvId}/messages`,
+            `${API_BASE_URL}/history/conversations/${currentConvId}/messages`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: JSON_HEADERS,
               body: JSON.stringify({
                 role: "user",
                 content: trimmed,
@@ -137,21 +136,19 @@ export function useChat({ enableHistory = false } = {}) {
           );
 
           if (!userHistoryRes.ok) {
-            console.error("No se pudo guardar el mensaje del usuario:", userHistoryRes.status);
+            console.error("Failed to save user message:", userHistoryRes.status);
           }
         }
       }
 
       /**
-      * Generate assistant response
-      */
+       * Generate assistant response
+       */
       const response = await fetch(
-        `${API_URL}/llm/generate`,
+        `${API_BASE_URL}/llm/generate`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             messages: updatedMessages,
             model,
@@ -177,16 +174,14 @@ export function useChat({ enableHistory = false } = {}) {
       ]);
 
       /**
-      * Save assistant response to history
-      */
+       * Save assistant response to history
+       */
       if (enableHistory && currentConvId) {
         const assistantHistoryRes = await fetch(
-          `${API_URL}/history/conversations/${currentConvId}/messages`,
+          `${API_BASE_URL}/history/conversations/${currentConvId}/messages`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: JSON_HEADERS,
             body: JSON.stringify({
               role: "assistant",
               content: data.reply,
@@ -195,7 +190,7 @@ export function useChat({ enableHistory = false } = {}) {
         );
 
         if (!assistantHistoryRes.ok) {
-          console.error("No se pudo guardar la respuesta del asistente:", assistantHistoryRes.status);
+          console.error("Failed to save assistant response:", assistantHistoryRes.status);
         }
       }
 
@@ -209,8 +204,7 @@ export function useChat({ enableHistory = false } = {}) {
 
       const errorMessage = {
         role: "assistant",
-        content:
-          "Could not get a response from the model.",
+        content: "Could not get a response from the model.",
       };
 
       setMessages((prev) => [
@@ -230,15 +224,15 @@ export function useChat({ enableHistory = false } = {}) {
   };
 
   /**
-  * Replace the current messages
-  */
+   * Replace the current messages
+   */
   const setConversationMessages = (newMessages) => {
     setMessages(Array.isArray(newMessages) ? newMessages : []);
   };
 
   /**
-  * Clear the current conversation
-  */
+   * Clear the current conversation
+   */
   const clearMessages = () => {
     setMessages([]);
     setConversationId(null);
@@ -257,4 +251,3 @@ export function useChat({ enableHistory = false } = {}) {
     loadConversation,
   };
 }
-

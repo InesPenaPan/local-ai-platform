@@ -1,24 +1,29 @@
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, Bot, Edit2, Trash2, Loader2 } from "lucide-react";
+import { MessageSquarePlus, Bot, Trash2, Loader2 } from "lucide-react";
 
 import NewButton from "./NewButton";
+import useDeleteAgent from "../hooks/useDeleteAgent";
+import useDeleteConversation from "../hooks/useDeleteConversation";
+
+const API_BASE_URL = "http://localhost:8000/api/v1";
+const AGENTS_LIST_ENDPOINT = `${API_BASE_URL}/agents/list`;
+const CONVERSATIONS_ENDPOINT = `${API_BASE_URL}/history/conversations`;
 
 /**
  * SidebarItem component serves as a flexible, interactive list entry for either 
  * a conversation or an AI agent within the application navigation sidebar.
  *
  * @component
- * @param {Object} props - Component properties
- * @param {Object} props.item - The data object representing the conversation or agent
- * @param {string} [props.item.name] - The name of the agent (used if type is "agent")
- * @param {string} [props.item.title] - The title of the conversation (used if type is "conversation")
- * @param {'agent' | 'conversation'} props.type - The category/type of the sidebar item
- * @param {() => void} props.onClick - Callback function triggered when the item container is clicked
- * @param {(item: Object) => void} [props.onAction] - Callback function triggered when the action button (edit/delete) is clicked
+ * @param {Object} props Component properties
+ * @param {Object} props.item The data object representing the conversation or agent
+ * @param {string} [props.item.name] The name of the agent (used if type is "agent")
+ * @param {string} [props.item.title] The title of the conversation (used if type is "conversation")
+ * @param {'agent' | 'conversation'} props.type The category/type of the sidebar item
+ * @param {() => void} props.onClick Callback function triggered when the item container is clicked
+ * @param {(item: Object) => void} [props.onAction] Callback function triggered when the action button (delete) is clicked
  * @returns {JSX.Element} The rendered sidebar item element
  */
-function SidebarItem({item, type, onClick, onAction }) {
-
+function SidebarItem({ item, type, onClick, onAction }) {
   const isAgent = type === "agent";
 
   return (
@@ -56,9 +61,9 @@ function SidebarItem({item, type, onClick, onAction }) {
           onAction?.(item);
         }}
         className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all shrink-0 ml-2"
-        title={isAgent ? "Edit Agent" : "Delete Conversation"}
+        title={isAgent ? "Delete Agent" : "Delete Conversation"}
       >
-        {isAgent ? <Edit2 size={13} /> : <Trash2 size={13} />}
+        <Trash2 size={13} />
       </button>
     </div>
   );
@@ -67,16 +72,16 @@ function SidebarItem({item, type, onClick, onAction }) {
 /**
  * Sidebar component acts as the primary navigation drawer for the application,
  * managing the layout and state for past conversations and custom AI agents.
- * It handles data fetching on mount, selection events, and edit/delete actions.
+ * It handles data fetching on mount, selection events, and delete actions.
  *
  * @component
- * @param {Object} props - Component properties
- * @param {() => void} props.onNewConversation - Callback triggered to start a new conversation
- * @param {() => void} props.onNewAgentClick - Callback triggered to open the creation flow for a new agent
- * @param {(agent: Object) => void} [props.onSelectAgent] - Callback triggered when an agent is selected
- * @param {(conversationId: string | number) => void} [props.onSelectConversation] - Callback triggered when a past conversation is selected
- * @param {(agent: Object) => void} [props.onEditAgent] - Callback triggered when editing an existing agent
- * @param {(conversation: Object) => void} [props.onDeleteConversation] - Callback triggered when deleting a past conversation
+ * @param {Object} props Component properties
+ * @param {() => void} props.onNewConversation Callback triggered to start a new conversation
+ * @param {() => void} props.onNewAgentClick Callback triggered to open the creation flow for a new agent
+ * @param {(agent: Object) => void} [props.onSelectAgent] Callback triggered when an agent is selected
+ * @param {(conversationId: string | number) => void} [props.onSelectConversation] Callback triggered when a past conversation is selected
+ * @param {(conversation: Object) => void} [props.onDeleteConversation] Callback triggered when deleting a past conversation
+ * @param {(agent: Object) => void} [props.onDeleteAgent] Callback triggered when deleting an agent
  * @returns {JSX.Element} The rendered sidebar navigation drawer
  */
 export default function Sidebar({
@@ -84,13 +89,25 @@ export default function Sidebar({
   onNewAgentClick,
   onSelectAgent,
   onSelectConversation,
-  onEditAgent,
   onDeleteConversation,
+  onDeleteAgent,
 }) {
   const [agents, setAgents] = useState([]);
   const [pastConversations, setPastConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const { deleteAgent } = useDeleteAgent((deletedAgent) => {
+    setAgents((prev) => prev.filter((a) => a.id !== deletedAgent.id));
+    onDeleteAgent?.(deletedAgent);
+  });
+
+  const { deleteConversation } = useDeleteConversation((deletedConversation) => {
+    setPastConversations((prev) =>
+      prev.filter((conv) => conv.id !== deletedConversation.id)
+    );
+    onDeleteConversation?.(deletedConversation);
+  });
 
   /**
    * Load agents and conversations when the sidebar is mounted.
@@ -102,8 +119,8 @@ export default function Sidebar({
         setError(null);
 
         const [agentsRes, convRes] = await Promise.all([
-          fetch("http://localhost:8000/api/v1/agents/list"),
-          fetch("http://localhost:8000/api/v1/history/conversations"),
+          fetch(AGENTS_LIST_ENDPOINT),
+          fetch(CONVERSATIONS_ENDPOINT),
         ]);
 
         if (agentsRes.ok) {
@@ -159,49 +176,6 @@ export default function Sidebar({
     onSelectAgent?.(agent);
   };
 
-  /**
-   * Edit agent.
-   */
-  const handleEditAgent = (agent) => {
-    console.log("SIDEBAR - Editando agente:", agent);
-    onEditAgent?.(agent);
-  };
-
-  /**
-   * Delete conversation.
-   */
-  const handleDeleteConversation = async (conversation) => {
-    console.log("SIDEBAR - Borrando conversación:", conversation);
-    
-    if (!conversation?.id) return;
-
-    const confirmed = window.confirm("Are you sure you want to delete this conversation?");
-    if (!confirmed) {
-      return; 
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/v1/history/conversations/${conversation.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setPastConversations((prev) =>
-          prev.filter((conv) => conv.id !== conversation.id)
-        );
-      
-        onDeleteConversation?.(conversation);
-      } else {
-        console.error("Error al eliminar la conversación en el servidor");
-      }
-    } catch (err) {
-      console.error("Error en la petición de borrado:", err);
-    }
-  };
-
   return (
     <aside className="w-72 h-full bg-[#0b111c]/95 border-r border-white/5 flex flex-col p-5 select-none z-40">
 
@@ -221,8 +195,8 @@ export default function Sidebar({
             key={conversation.id}
             item={conversation}
             type="conversation"
-            onClick={() =>handleSelectConversation(conversation)}
-            onAction={handleDeleteConversation}
+            onClick={() => handleSelectConversation(conversation)}
+            onAction={deleteConversation}
           />
         ))}
 
@@ -284,7 +258,7 @@ export default function Sidebar({
               item={agent}
               type="agent"
               onClick={() => handleSelectAgent(agent)}
-              onAction={handleEditAgent}
+              onAction={deleteAgent}
             />
           ))}
         </div>
