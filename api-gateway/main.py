@@ -6,7 +6,6 @@ import httpx
 from config import settings
 from router import router as api_router
 
-# Shared HTTP connection pool for asynchronous requests
 http_client: httpx.AsyncClient = None
 
 @asynccontextmanager
