@@ -19,10 +19,10 @@ async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> s
 
     system_instruction = (
         f"{agent.systemPrompt}\n\n"
-        "REGLA OBLIGATORIA:\n"
-        "- Tienes acceso real a la base de datos MySQL local mediante herramientas MCP.\n"
-        "- Para responder cualquier pregunta sobre datos o columnas, DEBES ejecutar las herramientas ('list_tables', 'describe_table', 'read_query').\n"
-        "- NUNCA supongas ni inventes columnas, registros ni valores."
+        "REGLAS DE EFICIENCIA:\n"
+        "- Tienes acceso real a la base de datos MySQL CRM mediante herramientas MCP.\n"
+        "- Sé directo y eficiente: si necesitas datos de una tabla, ejecuta directamente 'read_query' con la consulta SQL adecuada (ej. SELECT * FROM tabla LIMIT 10) en vez de hacer múltiples pasos innecesarios.\n"
+        "- NUNCA supongas ni inventes registros ni columnas."
     )
 
     messages = [{"role": "system", "content": system_instruction}]
@@ -31,37 +31,42 @@ async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> s
     messages.append({"role": "user", "content": user_prompt})
 
     model_name = agent.model or "llama3.1"
-    max_turns = 5  # Permite hasta 5 iteraciones seguidas de herramientas
+    max_turns = 4
 
-    async with httpx.AsyncClient(timeout=180.0) as client:
+    # Timeout de 300 segundos para dar tiempo suficiente a ejecuciones multi-turno en local
+    timeout_config = httpx.Timeout(300.0, connect=10.0)
+
+    async with httpx.AsyncClient(timeout=timeout_config) as client:
         for _ in range(max_turns):
-            # Llamamos a Ollama ofreciendo siempre las herramientas
-            res = await client.post(
-                f"{OLLAMA_URL}/api/chat",
-                json={
-                    "model": model_name,
-                    "messages": messages,
-                    "tools": tools,
-                    "stream": False,
-                    "options": {
-                        "temperature": agent.temperature or 0.1
+            try:
+                res = await client.post(
+                    f"{OLLAMA_URL}/api/chat",
+                    json={
+                        "model": model_name,
+                        "messages": messages,
+                        "tools": tools,
+                        "stream": False,
+                        "options": {
+                            "temperature": agent.temperature or 0.1
+                        }
                     }
-                }
-            )
-            res.raise_for_status()
-            res_data = res.json()
+                )
+                res.raise_for_status()
+                res_data = res.json()
+            except httpx.ReadTimeout:
+                return "La consulta a la base de datos tomó demasiado tiempo en procesarse. Intenta hacer una pregunta más concreta (por ejemplo: 'Muestra los primeros 5 clientes')."
 
             message = res_data.get("message", {})
             tool_calls = message.get("tool_calls", [])
 
-            # Si el modelo no pide más herramientas, ya tiene la respuesta final
+            # Si el modelo no solicita más herramientas, ya redactó la respuesta final
             if not tool_calls:
                 return message.get("content", "")
 
-            # Guardamos la intención del modelo
+            # Guardar el mensaje del asistente con las llamadas
             messages.append(message)
 
-            # Ejecutar todas las herramientas que haya pedido en este turno
+            # Ejecutar las herramientas solicitadas en este turno
             for tool_call in tool_calls:
                 function_data = tool_call.get("function", {})
                 fn_name = function_data.get("name")
@@ -82,7 +87,7 @@ async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> s
                     "content": str(tool_output)
                 })
 
-        # Si agotara los 5 turnos, forzamos respuesta final de texto
+        # Síntesis final tras agotar turnos
         final_res = await client.post(
             f"{OLLAMA_URL}/api/chat",
             json={
