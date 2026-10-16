@@ -1,53 +1,50 @@
 # 📚 RAG Service: Local Vector Retrieval & Document Processing
 
-> This microservice is part of an agent-based local conversational architecture. Built with **FastAPI**, it acts as the abstraction layer to process documents, generate local embeddings using **Ollama** (`nomic-embed-text`), and interact with the **Qdrant** vector database.
+> Built with **FastAPI**, this microservice acts as the abstraction layer to process documents, extract textual data, generate local embeddings via **Ollama** (`nomic-embed-text`), and persist and query vector representations using the **Qdrant** vector database.
 
 The service provides a local RAG (Retrieval-Augmented Generation) infrastructure layer that can:
 
-* Upload and process documents
-* Extract text from PDF and Word documents
-* Split documents into overlapping chunks
-* Generate local embeddings using 
-* Store embeddings and metadata in Qdrant
-* Perform semantic similarity searches
+* Ingest and parse documents (`.pdf`, `.docx`, `.doc`, `.txt`).
+* Split continuous text into overlapping chunks using recursive character splitting.
+* Generate dense vector embeddings locally via Ollama.
+* Provision collections and store vector payloads and metadata in Qdrant.
+* Execute semantic similarity searches against indexed document collections.
+* Provide monitoring and health checks for vector database connectivity.
 
 
 ## 📋 Prerequisites
 
-Before running this microservice, ensure you have the following installed and configured:
-
-| Requirement | Details & Commands |
+| Requirement | Details & Description |
 | :--- | :--- |
-| **Python** | Version 3.11 or 3.12 (⚠️ *Important: Avoid experimental versions to prevent compilation errors with Pydantic*). |
-| **Ollama** | [Download Ollama](https://ollama.com/) and ensure it runs in the background (`http://localhost:11434`). |
-| **Embedding Model** | You must download the required local embedding model: <br>`ollama run nomic-embed-text` |
+| **Python** | Version 3.11 or 3.12 (⚠️ *Important: Avoid Python 3.14 or unverified experimental builds to prevent compilation issues with Pydantic*). |
+| **Ollama** | [Download Ollama](https://ollama.com/) and ensure the background daemon is running (`http://localhost:11434` or `http://host.docker.internal:11434`). |
+| **Embedding Model** | Pull and run the local embedding model before starting the service: `ollama run nomic-embed-text` |
+| **Qdrant** | Ensure an active Qdrant vector database instance is accessible on port `6333`. |
 
-
-
-## 🚀 Running the Service
-
-In your project terminal (with the `venv` activated), start the Uvicorn server on port 8001:
-```PowerShell
-python -m venv venv
-.\venv\Scripts\activate
-
-uvicorn main:app --port 8002 --reload
-```
 
 ## 📖 API Documentation & Usage
 
-Once the server is running, the API is strictly available locally. You can access the auto-generated endpoint documentation directly on your machine.
+When the service starts, an interactive OpenAPI/Swagger specification interface is served directly from the application.
 
-Navigate to http://localhost:8002/docs in your browser to interact with the API.
-
+Navigate to http://localhost:8002/docs in your browser to inspect schemas and execute test requests against the endpoints.
 
 ### Endpoint 1: `POST /health`
 
-Verifies the health status of the service, the active port, the configured embedding model, and connectivity with the Qdrant vector database.
+Verifies the service status, listening port, configured embedding model, and connection state with the Qdrant vector database.
+
+**Response Playload**
+```JSON
+{
+  "status": "healthy",
+  "port": 8002,
+  "embedding_model": "nomic-embed-text",
+  "vector_db_connected": true
+}
+```
 
 ### Endpoint 2: `POST /embeddings`
 
-Generates an embedding vector from plain text using the local Ollama `nomic-embed-text` model.
+Generates a dense vector embedding from plain text using the local `nomic-embed-text` model.
 
 **Request Playload (`TextEmbeddingRequest`)**
 ```JSON
@@ -67,13 +64,9 @@ Generates an embedding vector from plain text using the local Ollama `nomic-embe
 
 ### Endpoint 3: `POST /upload-document`
 
-Uploads a document and adds it to the RAG knowledge base.
+Uploads a document, extracts text, chunks content, generates embeddings, and indexes them into the specified Qdrant collection.
 
-The API currently accepts:
-
-* `.pdf`
-* `.doc`
-* `.docx`
+Supported formats:`.pdf`, `.doc`, `.docx`, `txt`
 
 **PowerShell Test Example:**
 ```PowerShell
@@ -95,7 +88,7 @@ Invoke-RestMethod -Uri "http://localhost:8002/upload-document" -Method Post -For
 
 ### Endpoint 4: `GET /collections`
 
-Returns information about the Qdrant collections currently available to the application.
+Returns detailed statistics and status for all collections currently available in the Qdrant instance.
 
 **Response Playload**
 ```JSON
@@ -115,9 +108,7 @@ Returns information about the Qdrant collections currently available to the appl
 
 ### Endpoint 5: `POST /search`
 
-Performs semantic similarity search against a Qdrant collection.
-
-The user's query is converted into an embedding using Ollama. Qdrant then compares that vector with the stored document vectors and returns the most semantically similar chunks.
+Executes a semantic similarity search against a specified Qdrant collection. The input query is embedded via Ollama, matched against indexed points in Qdrant, and returns the top matching text chunks.
 
 **Request Playload (`SearchRequest`)**
 ```JSON
@@ -144,22 +135,23 @@ The service relies on the following main components:
 
 | Component | Purpose |
 | :--- | :--- |
-| **FastAPI** | HTTP API framework |
-| **Uvicorn** | ASGI application server |
-| **Ollama** | Local embedding generation |
-| **Qdrant** | Vector database and similarity search |
-| **LangChain** | Embedding and text-splitting utilities |
-| **Pydantic** | Request/response validation |
+| **FastAPI** | High-performance asynchronous API framework and route definitions. |
+| **Uvicorn** | ASGI web server handling HTTP requests and runtime concurrency. |
+| **Qdrant Client** | Vector database client managing collection lifecycle, upserts, and payload filtering. |
+| **LangChain** | Embeddings client interfaces and recursive text-splitting utilities. |
+| **Pydantic** | Document text extraction libraries for PDF and Word files. |
+| **PyPDF / Python-Docx** | Payload parsing, type validation, and data serialization (DTOs). |
 
 ## 📁 Directory Structure
 
 ```bash
 rag-service/
 │
-├── main.py              # FastAPI application controller and HTTP routes
-├── models.py            # Pydantic schemas (Contracts and DTOs)
-├── rag_logic.py         # Core logic (Ollama embeddings, Qdrant, and PDF/Word parsing)
-├── Dockerfile           # Docker containerization configuration
-├── requirements.txt     # Project dependencies (FastAPI, LangChain, Qdrant, pypdf, python-docx)
-└── store_logic.py       # Embeddings, document parsing, chunking, Qdrant storage, collection management, and health checks
+├── Dockerfile          # Multi-stage image build definition for containerized deployment
+├── main.py             # FastAPI entry point, multipart upload endpoints, and retrieval routes
+├── models.py           # Pydantic schemas (DTOs) for inbound and outbound request validation
+├── README.md           # Microservice documentation, API examples, and usage instructions
+├── requirements.txt    # Frozen production dependencies
+├── retrieve_logic.py   # Embedding conversion and semantic similarity search against Qdrant
+└── store_logic.py      # Document parsing, chunking, collection creation, upsert, and health checks
 ```
