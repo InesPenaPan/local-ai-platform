@@ -1,16 +1,32 @@
 # 🧠 Local AI Platform 
 
-> An end-to-end, private local AI platform and experimentation testbed designed to run on-premise Large Language Models (LLMs), test Retrieval-Augmented Generation (RAG) pipelines, and build secure conversational agents offline using FastAPI and Ollama.
+> An end-to-end, private, and modular local AI platform designed to run on-premise Large Language Models (LLMs), orchestrate Retrieval-Augmented Generation (RAG) pipelines, execute autonomous agents with Model Context Protocol (MCP) tool support, and manage multi-turn chat sessions without relying on third-party cloud APIs
+
+## 🏛️ System Architecture & Services
+
+The ecosystem operates as a distributed system with standardized network boundaries and dedicated service responsibilities[cite: 2, 3]:
+
+| Service | Port | Technology | Primary Responsibility |
+| :--- | :--- | :--- | :--- |
+| **`ai-app`** | `5173` | React, Vite, Tailwind CSS | Conversational UI, agent creation studio, and RAG/tool management dashboards. |
+| **`api-gateway`** | `8000` | FastAPI, HTTPX | Centralized entry point, reverse proxy, request validation, and route orchestration. |
+| **`llm-service`** | `8001` | FastAPI, Requests | Model inference proxy with Ollama, handling chat completion and native function calling. |
+| **`rag-service`** | `8002` | FastAPI, LangChain, Qdrant | Document parsing, text chunking, local vector embedding generation, and semantic search. |
+| **`agent-service`** | `8003` | FastAPI, SQLite, MCP Client | AI agent definition persistence and conversational reasoning loops with dynamic tool invocation. |
+| **`chat-history-service`** | `8004` | FastAPI, SQLAlchemy, SQLite | Persistent conversational session storage and message history tracking. |
+| **`qdrant`** | `6333` | Qdrant Vector Engine | Embedded vector storage and nearest-neighbor vector similarity retrieval. |
+| **`mysql-mcp`** | `8080` | Node.js, MCP Protocol | *(Optional)* Model Context Protocol bridge server enabling database inspection and query execution. |
 
 ## 📋 Prerequisites
 
-Before running the platform, ensure you have the following installed and configured on your host machine:
+Before deploying the platform, verify that your environment satisfies the following requirements:
 
-| Requirement | Details |
+| Requirement | Details & Description |
 | :--- | :--- |
-| **Docker & Compose** | Required to build, orchestrate, and run the microservices ecosystem. |
-| **Ollama** | [Download Ollama](https://ollama.com/) and ensure it is running in the background (`http://localhost:11434`). |
-| **LLM Models** | You need to download your preferred models locally via Ollama (e.g., `ollama pull llama3.1`). |
+| **Docker & Docker Compose** | Engine v24+ and Docker Compose v2+ installed for multi-container orchestration. |
+| **Ollama** | [Download Ollama](https://ollama.com/) and ensure the background daemon is running and reachable on `http://localhost:11434` (or `http://host.docker.internal:11434`). |
+| **LLM Inference Models** | Pull and run your desired model before initiating inference calls (e.g., `ollama pull llama3.1` and `ollama run llama3.1`). |
+| **Embedding Models** | Pull and run the local embedding model used by the RAG service: `ollama run nomic-embed-text`.|
 
 ## 🚀 Running the App
 
@@ -24,17 +40,22 @@ ollama run llama3.1
 
 *(You can type `/bye` to exit the prompt; Ollama will keep running in the background)*
 
-### Step 2: Deploy the Microservices
 
-Open a new terminal, navigate to the root directory of the project (where the `docker-compose.yml` is located), and build/start the containers in detached mode:
+### Step 2: Configure Environment Variables
+
+Create or review your root `.env` file to ensure the API Gateway and downstream services have their required keys and endpoints configured (e.g., `REMOTE_SECRET_KEY`).
+
+### Step 3: Deploy the Ecosystem
+
+From the root repository directory (where the `docker-compose.yml` is located) build and launch all containers in detached mode:
 
 ```PowerShell
 docker compose up --build -d
 ```
 
-### Step 3: Verify the Deployment
+### Step 4: Verify Service Health
 
-Ensure that all backend services, the frontend, and the databases are up and running successfully:
+Inspect the operational status of all platform containers:
 
 ```PowerShell
 docker compose ps
@@ -42,27 +63,29 @@ docker compose ps
 
 ## 🌐 User Interfaces & Endpoints
 
-Once your containers are fully initialized, you can interact with the platform through your browser:
+Once initialized, access the graphical dashboards and technical interfaces directly from your browser:
 
 * Frontend Application (Web UI): http://localhost:5173
-* Qdrant Vector Database (Dashboard UI): http://localhost:6333/dashboard
-* API Gateway (Swagger UI): http://localhost:8000/docs
+* API Gateway Swagger Documentation: http://localhost:8000/docs
+* Qdrant Vector Database Web Dashboard: http://localhost:6333/dashboard
 
 
 ## 📁 Project Structure
 
-This repository uses a microservices architecture. Each service contains its own detailed `README.md` for specific configuration and development guidelines.
+Each subdirectory is an isolated service containing its own dedicated `README.md`, configuration, and dependency definitions:
 
 ```text
 local-ai-platform/
 │
-├── agent-service/          # Microservice for creating and managing custom AI agents
-├── ai-app/                 # Frontend Web Application (React/Vite)
-├── api-gateway/            # Centralized FastAPI reverse proxy and routing
-├── llm-service/            # Downstream service interfacing with local LLMs (Ollama)
-├── rag-service/            # Microservice for document embedding and vector search
+├── agent-service/          # Custom AI agent profiles, logic handlers, and MCP execution loops
+├── ai-app/                 # Responsive React/Vite user interface (Chat, Knowledge, Tools)
+├── api-gateway/            # Central asynchronous reverse proxy and route orchestrator
+├── chat-history-service/   # Session persistence, relational message storage, and SQLite backend
+├── llm-service/            # Local model inference abstraction layer interfacing with Ollama
+├── mysql-mcp/              # MCP database server exposing SQL inspection tools over HTTP/SSE
+├── rag-service/            # Document parsing, chunking, embedding generation, and Qdrant retrieval
 │
-├── docker-compose.yml      # Global deployment configuration
-└── README.md               # Global platform documentation (You are here)
+├── docker-compose.yml      # Orchestration file linking container networks, volumes, and ports
+└── README.md               # Root architecture overview and deployment guide
 ```
 
