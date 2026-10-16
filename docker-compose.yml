@@ -81,6 +81,7 @@ services:
       - AGENT_SERVICE_URL=http://agent-service:8003
       - CHAT_HISTORY_SERVICE_URL=http://chat-history-service:8004
       - MYSQL_MCP_URL=http://mysql-mcp:8080
+      - REMOTE_SECRET_KEY=${REMOTE_SECRET_KEY}
     depends_on:
       - llm-service
       - rag-service
@@ -108,14 +109,20 @@ services:
     container_name: mysql_mcp
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      - MYSQL_HOST=${MYSQL_HOST}
-      - MYSQL_PORT=${MYSQL_PORT}
+      - IS_REMOTE_MCP=true
+      - REMOTE_SECRET_KEY=${REMOTE_SECRET_KEY}
+      - PORT=8080
+      - HOST=0.0.0.0
+      - MYSQL_HOST=${MYSQL_HOST:-host.docker.internal}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
       - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASS=${MYSQL_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DATABASE}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - SERVER_PORT=8080
-      - ALLOW_ORIGINS=*
     restart: always
     networks:
       - ai_network
@@ -127,7 +134,3 @@ volumes:
 networks:
   ai_network:
     driver: bridge
-
-
-
-  

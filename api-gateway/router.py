@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 import httpx
 
+from config import settings
 from schemas import (
     ChatRequest, 
     ChatResponse, 
@@ -21,13 +22,12 @@ router = APIRouter(prefix="/api/v1", tags=["AI Services Gateway"])
 async def proxy_chat(payload: ChatRequest):
     """
     Forwards chat requests (including message history and roles) 
-    to the downstream LLM inference microservice.
+    to the downstream LLM inference microservice using extended timeout.
     """
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            # model_dump() convertirá correctamente la lista de mensajes y los Enums a JSON
+        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://llm-service:8001/generate",
+                f"{settings.LLM_SERVICE_URL}/generate",
                 json=payload.model_dump()
             )
             response.raise_for_status()
@@ -46,7 +46,7 @@ async def proxy_chat(payload: ChatRequest):
     except httpx.ReadTimeout:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="The LLM service took too long to respond (Read Timeout)."
+            detail=f"The LLM service timed out after {settings.LLM_TIMEOUT_SECONDS}s."
         )
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
@@ -58,12 +58,12 @@ async def proxy_chat(payload: ChatRequest):
 @router.post("/rag/embeddings", response_model=EmbeddingResponse)
 async def proxy_embeddings(payload: TextEmbeddingRequest):
     """
-    Forwards text to the downstream rag-service (port 8002) to generate vector embeddings.
+    Forwards text to the downstream rag-service to generate vector embeddings.
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://rag-service:8002/embeddings",
+                f"{settings.RAG_SERVICE_URL}/embeddings",
                 json=payload.model_dump()
             )
             response.raise_for_status()
@@ -97,15 +97,11 @@ async def proxy_upload_document(
     try:
         file_bytes = await file.read()
         files = {"file": (file.filename, file_bytes, file.content_type)}
-        
-        # Only send collection_name, matching the React frontend
         data = {"collection_name": collection_name}
 
-        timeout_settings = httpx.Timeout(120.0, connect=15.0)
-
-        async with httpx.AsyncClient(timeout=timeout_settings) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://rag-service:8002/upload-document",
+                f"{settings.RAG_SERVICE_URL}/upload-document",
                 files=files,
                 data=data
             )
@@ -135,8 +131,8 @@ async def proxy_get_collections():
     Fetches the list of all collections and their sizes from the downstream RAG service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get("http://rag-service:8002/collections")
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{settings.RAG_SERVICE_URL}/collections")
             response.raise_for_status()
             return response.json()
 
@@ -158,9 +154,9 @@ async def proxy_search_context(payload: SearchRequest):
     Forwards search queries to the downstream RAG service to retrieve relevant context.
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://rag-service:8002/search",
+                f"{settings.RAG_SERVICE_URL}/search",
                 json=payload.model_dump()
             )
             response.raise_for_status()
@@ -186,12 +182,12 @@ async def proxy_search_context(payload: SearchRequest):
 @router.post("/agents/create-agent")
 async def proxy_create_agent(payload: dict):
     """
-    Forwards a request to create a new agent to the downstream agent-service (port 8003).
+    Forwards a request to create a new agent to the downstream agent-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://agent-service:8003/create-agent",
+                f"{settings.AGENT_SERVICE_URL}/create-agent",
                 json=payload
             )
             response.raise_for_status()
@@ -212,11 +208,11 @@ async def proxy_create_agent(payload: dict):
 @router.get("/agents/list")
 async def proxy_get_agents():
     """
-    Fetches the list of all created agents from the downstream agent-service (port 8003).
+    Fetches the list of all created agents from the downstream agent-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get("http://agent-service:8003/list")
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{settings.AGENT_SERVICE_URL}/list")
             response.raise_for_status()
             return response.json()
 
@@ -238,9 +234,9 @@ async def proxy_get_agent(name: str):
     Fetches a specific agent by name from the downstream agent-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.get(
-                f"http://agent-service:8003/agent/{name}"
+                f"{settings.AGENT_SERVICE_URL}/agent/{name}"
             )
             response.raise_for_status()
             return response.json()
@@ -261,14 +257,15 @@ async def proxy_get_agent(name: str):
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
 
+
 @router.get("/history/conversations")
 async def proxy_list_conversations():
     """
     Fetches the list of all saved conversations from the chat-history-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get("http://chat-history-service:8004/conversations")
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{settings.CHAT_HISTORY_SERVICE_URL}/conversations")
             response.raise_for_status()
             return response.json()
 
@@ -290,9 +287,9 @@ async def proxy_create_conversation(payload: ConversationCreate):
     Forwards a request to create a new conversation to the chat-history-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                "http://chat-history-service:8004/conversations",
+                f"{settings.CHAT_HISTORY_SERVICE_URL}/conversations",
                 json=payload.model_dump()
             )
             response.raise_for_status()
@@ -316,9 +313,9 @@ async def proxy_get_conversation_messages(conversation_id: int):
     Fetches all messages belonging to a specific conversation from chat-history-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.get(
-                f"http://chat-history-service:8004/conversations/{conversation_id}/messages"
+                f"{settings.CHAT_HISTORY_SERVICE_URL}/conversations/{conversation_id}/messages"
             )
             response.raise_for_status()
             return response.json()
@@ -341,9 +338,9 @@ async def proxy_add_message_to_conversation(conversation_id: int, payload: Messa
     Forwards a message (user prompt or assistant reply) to be saved in a conversation.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(
-                f"http://chat-history-service:8004/conversations/{conversation_id}/messages",
+                f"{settings.CHAT_HISTORY_SERVICE_URL}/conversations/{conversation_id}/messages",
                 json=payload.model_dump()
             )
             response.raise_for_status()
@@ -360,15 +357,16 @@ async def proxy_add_message_to_conversation(conversation_id: int, payload: Messa
             detail=f"Downstream chat-history-service error: {exc.response.text}"
         )
 
+
 @router.delete("/history/conversations/{conversation_id}")
 async def proxy_delete_conversation(conversation_id: int):
     """
     Forwards a request to delete a conversation to the chat-history-service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.delete(
-                f"http://chat-history-service:8004/conversations/{conversation_id}"
+                f"{settings.CHAT_HISTORY_SERVICE_URL}/conversations/{conversation_id}"
             )
             response.raise_for_status()
             return response.json()
@@ -384,29 +382,35 @@ async def proxy_delete_conversation(conversation_id: int):
             detail=f"Downstream chat-history-service error: {exc.response.text}"
         )
 
-@router.get("/mcp/system-metrics")
-async def proxy_system_metrics():
+
+@router.get("/mysql/health")
+async def proxy_mysql_mcp_health():
     """
-    Fetches real-time system metrics from the computer
+    Checks connectivity and health status of the downstream MySQL MCP service.
     """
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get("http://system-mcp:8005/metrics")
-            response.raise_for_status()
-            return response.json()
+        headers = {"x-secret-key": settings.REMOTE_SECRET_KEY}
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{settings.MYSQL_MCP_URL}/sse", headers=headers)
+            return {
+                "status": "connected",
+                "target_service": "mysql-mcp",
+                "http_status": response.status_code,
+                "url": settings.MYSQL_MCP_URL
+            }
 
     except httpx.ConnectError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Downstream system-mcp service is unreachable."
+            detail="Downstream MySQL MCP service is unreachable (port 8080 unavailable)."
         )
     except httpx.ReadTimeout:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="The system-mcp service took too long to respond."
+            detail="The MySQL MCP service took too long to respond."
         )
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code,
-            detail=f"Downstream system-mcp service error: {exc.response.text}"
+            detail=f"Downstream MySQL MCP service error: {exc.response.text}"
         )
