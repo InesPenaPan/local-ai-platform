@@ -15,7 +15,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class AgentDB(Base):
+    """
+    SQLAlchemy ORM model representing agent definitions and configurations.
+    """
     __tablename__ = "agents"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(String)
@@ -25,10 +29,14 @@ class AgentDB(Base):
     collection = Column(String)
     temperature = Column(Float)
 
+
+# Ensure database tables exist on application startup
 Base.metadata.create_all(bind=engine)
 
+# FastAPI application initialization
 app = FastAPI(title="Agent Service")
 
+# Global CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,43 +45,61 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_db():
+    """
+    Dependency generator providing an isolated database session per request lifecycle.
+    """
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
+
 class AgentChatRequest(BaseModel):
     """
-    Inbound payload containing the user query and optional previous conversation history.
+    Schema for inbound chat requests containing the user query and message context.
     """
     prompt: str
     history: Optional[List[dict]] = []
 
+
 @app.post("/create-agent", response_model=AgentResponse)
 def create_agent(agent: AgentCreate, db: Session = Depends(get_db)):
+    """
+    Registers a new agent configuration in the system.
+    """
     return agent_logic.create_new_agent(db, agent)
+
 
 @app.get("/list", response_model=list[AgentResponse])
 def list_agents(db: Session = Depends(get_db)):
+    """
+    Retrieves all registered agents stored in the database.
+    """
     return agent_logic.get_all_agents(db)
+
 
 @app.get("/agent/{name}", response_model=AgentResponse)
 def get_agent(name: str, db: Session = Depends(get_db)):
+    """
+    Fetches the configuration details of a specific agent by its unique name.
+    """
     agent = agent_logic.get_agent_by_name(db, name)
     if agent is None:
         raise HTTPException(status_code=404, detail=f"Agente con el nombre '{name}' no encontrado")
     return agent
 
+
 @app.post("/agent/{name}/chat")
 async def chat_with_agent(name: str, payload: AgentChatRequest, db: Session = Depends(get_db)):
     """
-    Executes a chat session with an agent, granting it access to downstream MCP database tools.
+    Executes a multi-turn chat cycle with the specified agent using MCP tool integrations.
     """
     agent = agent_logic.get_agent_by_name(db, name)
     if not agent:
         raise HTTPException(status_code=404, detail=f"Agente con el nombre '{name}' no encontrado")
-        
+
     reply = await execute_agent_chat(agent, payload.prompt, payload.history)
     return {"reply": reply}

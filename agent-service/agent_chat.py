@@ -4,40 +4,45 @@ import httpx
 from mcp_client import MySQLMCPAgentClient
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+DEFAULT_MODEL = "llama3.1"
+DEFAULT_TEMPERATURE = 0.1
+MAX_TOOL_ITERATIONS = 4
+REQUEST_TIMEOUT_SECONDS = 300.0
+CONNECT_TIMEOUT_SECONDS = 10.0
+
 mcp_client = MySQLMCPAgentClient()
 
 async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> str:
     """
-    Orchestrates the autonomous agent conversation loop with multi-turn tool support:
-    User Prompt -> [Ollama Tool Call <-> MCP Tool Execution]* -> Final Synthesis.
+    Resolves natural language queries by executing real database operations via MCP.
+    Delivers a grounded response synthesized from verified transactional data.
     """
     if history is None:
         history = []
 
-    # 1. Obtener herramientas reales de mysql-mcp
     tools = await mcp_client.get_tools_for_ollama()
 
     system_instruction = (
         f"{agent.systemPrompt}\n\n"
-        "REGLAS DE EFICIENCIA:\n"
-        "- Tienes acceso real a la base de datos MySQL CRM mediante herramientas MCP.\n"
-        "- Sé directo y eficiente: si necesitas datos de una tabla, ejecuta directamente 'read_query' con la consulta SQL adecuada (ej. SELECT * FROM tabla LIMIT 10) en vez de hacer múltiples pasos innecesarios.\n"
-        "- NUNCA supongas ni inventes registros ni columnas."
+        "DATABASE RULES:\n"
+        "- Query MySQL via MCP tools; never simulate data or column names.\n"
+        "- Be direct: use 'read_query' immediately to fetch data without redundant schema checks."
     )
 
+    # Assemble conversation payload with strict system guardrails
     messages = [{"role": "system", "content": system_instruction}]
     for msg in history:
         messages.append(msg)
     messages.append({"role": "user", "content": user_prompt})
 
-    model_name = agent.model or "llama3.1"
-    max_turns = 4
+    model_name = agent.model or DEFAULT_MODEL
+    agent_temperature = agent.temperature if agent.temperature is not None else DEFAULT_TEMPERATURE
 
-    # Timeout de 300 segundos para dar tiempo suficiente a ejecuciones multi-turno en local
-    timeout_config = httpx.Timeout(300.0, connect=10.0)
+    timeout_config = httpx.Timeout(REQUEST_TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)
 
     async with httpx.AsyncClient(timeout=timeout_config) as client:
-        for _ in range(max_turns):
+        # Re-Act reasoning loop: permits sequential tool calls until convergence
+        for _ in range(MAX_TOOL_ITERATIONS):
             try:
                 res = await client.post(
                     f"{OLLAMA_URL}/api/chat",
@@ -47,26 +52,26 @@ async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> s
                         "tools": tools,
                         "stream": False,
                         "options": {
-                            "temperature": agent.temperature or 0.1
+                            "temperature": agent_temperature
                         }
                     }
                 )
                 res.raise_for_status()
                 res_data = res.json()
             except httpx.ReadTimeout:
-                return "La consulta a la base de datos tomó demasiado tiempo en procesarse. Intenta hacer una pregunta más concreta (por ejemplo: 'Muestra los primeros 5 clientes')."
+                return "Database query timed out. Please try a more specific request."
 
             message = res_data.get("message", {})
             tool_calls = message.get("tool_calls", [])
 
-            # Si el modelo no solicita más herramientas, ya redactó la respuesta final
+            # Exit the loop once the model has sufficient data to answer
             if not tool_calls:
                 return message.get("content", "")
 
-            # Guardar el mensaje del asistente con las llamadas
+            # Preserve the model's function-calling intent in conversation history
             messages.append(message)
 
-            # Ejecutar las herramientas solicitadas en este turno
+            # Execute requested database operations via the MCP bridge
             for tool_call in tool_calls:
                 function_data = tool_call.get("function", {})
                 fn_name = function_data.get("name")
@@ -78,16 +83,17 @@ async def execute_agent_chat(agent, user_prompt: str, history: list = None) -> s
                     except Exception:
                         fn_args = {}
 
-                print(f"[AGENT] Ejecutando: {fn_name} con args {fn_args}")
+                print(f"[AGENT] Executing tool: {fn_name} with arguments: {fn_args}")
                 tool_output = await mcp_client.execute_tool(fn_name, fn_args)
-                print(f"[AGENT] Salida BD: {tool_output}")
+                print(f"[AGENT] Tool output: {tool_output}")
 
+                # Provide grounded execution outputs back to the model context
                 messages.append({
                     "role": "tool",
                     "content": str(tool_output)
                 })
 
-        # Síntesis final tras agotar turnos
+        # Fallback synthesis: force natural language summary if max iterations are exhausted
         final_res = await client.post(
             f"{OLLAMA_URL}/api/chat",
             json={

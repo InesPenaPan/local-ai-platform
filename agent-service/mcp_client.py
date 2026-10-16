@@ -8,22 +8,26 @@ SECRET_KEY = os.getenv("REMOTE_SECRET_KEY", "4a8f9c2d1e0b5a7f3e6c8b9a0d2e4f1a5b8
 class MySQLMCPAgentClient:
     """
     Client for MCP Stateless Streamable HTTP Server over JSON-RPC 2.0.
-    Handles standard JSON and Server-Sent Events (SSE) data stream framing.
+    Handles standard JSON parsing and Server-Sent Events (SSE) data framing.
     """
+
     def __init__(self):
-        self.endpoint = MCP_URL if MCP_URL.endswith("/mcp") else f"{MCP_URL.rstrip('/')}/mcp"
+        self.endpoint = (MCP_URL if MCP_URL.endswith("/mcp") else f"{MCP_URL.rstrip('/')}/mcp")
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
-            "Authorization": f"Bearer {SECRET_KEY}"
+            "Authorization": f"Bearer {SECRET_KEY}",
         }
 
     async def _send_rpc(self, method: str, params: dict = None) -> dict:
+        """
+        Dispatches a JSON-RPC 2.0 request and parses standard or SSE responses.
+        """
         payload = {
             "jsonrpc": "2.0",
             "id": 1,
             "method": method,
-            "params": params or {}
+            "params": params or {},
         }
 
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -33,11 +37,11 @@ class MySQLMCPAgentClient:
             raw_text = res.text.strip()
             data = None
 
-            # 1. Intentar decodificar como JSON estándar
+            # Attempt decoding standard JSON payload
             try:
                 data = json.loads(raw_text)
             except Exception:
-                # 2. Si viene como stream SSE, extraer las líneas que empiezan por 'data:'
+                # Fallback: Parse Server-Sent Events (SSE) stream lines
                 for line in raw_text.splitlines():
                     trimmed_line = line.strip()
                     if trimmed_line.startswith("data:"):
@@ -48,9 +52,11 @@ class MySQLMCPAgentClient:
                         except Exception:
                             continue
 
+            # Ensure the response was successfully parsed into an object
             if not data or not isinstance(data, dict):
-                raise Exception(f"No se pudo parsear la respuesta MCP: {raw_text}")
+                raise Exception(f"Failed to parse MCP response: {raw_text}")
 
+            # Raise an exception if the JSON-RPC response contains an error block
             if "error" in data:
                 raise Exception(f"MCP RPC Error: {data['error']}")
 
@@ -58,11 +64,12 @@ class MySQLMCPAgentClient:
 
     async def get_tools_for_ollama(self):
         """
-        Retrieves database tools and maps them to Ollama-compatible function schemas.
+        Retrieves remote database tools and maps them to Ollama-compatible function schemas.
         """
         result = await self._send_rpc("tools/list")
         raw_tools = result.get("tools", [])
 
+        # Transform MCP tool schemas into Ollama function-calling definitions
         ollama_tools = []
         for tool in raw_tools:
             ollama_tools.append({
@@ -70,22 +77,23 @@ class MySQLMCPAgentClient:
                 "function": {
                     "name": tool.get("name"),
                     "description": tool.get("description", ""),
-                    "parameters": tool.get("inputSchema", {})
-                }
+                    "parameters": tool.get("inputSchema", {}),
+                },
             })
         return ollama_tools
 
     async def execute_tool(self, tool_name: str, arguments: dict) -> str:
         """
-        Executes a database query or schema inspection tool via MCP.
+        Executes a database query or schema inspection tool via the MCP protocol.
         """
         params = {
             "name": tool_name,
-            "arguments": arguments
+            "arguments": arguments,
         }
         result = await self._send_rpc("tools/call", params)
         content_items = result.get("content", [])
 
+        # Extract and aggregate text responses returned by the MCP tool
         output_texts = []
         for item in content_items:
             if isinstance(item, dict) and "text" in item:

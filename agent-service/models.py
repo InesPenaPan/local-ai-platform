@@ -7,8 +7,13 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+
 class AgentDB(Base):
+    """
+    SQLAlchemy ORM model defining the schema for persisted agent profiles.
+    """
     __tablename__ = "agents"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(String)
@@ -18,14 +23,22 @@ class AgentDB(Base):
     collection = Column(String)
     temperature = Column(Float)
 
+
 def get_db():
+    """
+    Yields a transactional database session per request lifecycle and guarantees cleanup.
+    """
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
+
 class AgentCreate(BaseModel):
+    """
+    Inbound DTO schema for validating agent creation payloads.
+    """
     name: str
     description: str = ""
     systemPrompt: str
@@ -34,7 +47,12 @@ class AgentCreate(BaseModel):
     collection: str = "none"
     temperature: float = 0.7
 
+
 class AgentResponse(AgentCreate):
+    """
+    Outbound response DTO schema returning persisted agent details along with the unique ID.
+    """
     id: int
+
     class Config:
         from_attributes = True

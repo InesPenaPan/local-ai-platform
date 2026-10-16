@@ -1,52 +1,45 @@
 # 🤖 Agent Service
 
-> A lightweight, database-backed microservice built with FastAPI to manage, store, and retrieve custom AI agent configurations and their system instructions.
+> A lightweight microservice built with FastAPI to manage, store, and retrieve custom AI agent configurations, with optional tool integration powered by the Model Context Protocol (MCP).
 
-The service provides a robust local database infrastructure that can:
+The service provides a robust local infrastructure that can:
 
 * Create and store custom AI agent configurations securely
 * Retrieve a complete list of all registered agents
 * Fetch detailed configurations for specific agents by name
+* Execute conversational reasoning loops with optional external MCP tools (such as MySQL integration)
 * Support modular CRUD operations via dedicated logic handlers
 
 ## 📋 Prerequisites
 
-Before running this individual microservice locally, ensure you have the following installed:
+Before running this microservice, ensure you have the following installed:
 
 | Requirement | Details & Commands |
 | :--- | :--- |
-| **Python** | Version 3.12 (⚠️*Important: Do not use Python 3.14 or experimental versions).* |
-| **SQLite** | No installation required; the service uses Python's built-in SQLite library and auto-generates the `agents.db` file. |
-
-## 🚀 Running the App
-
-In your project terminal (with the `venv` activated), start the Uvicorn server on port 8001:
-
-```PowerShell
-python -m venv venv
-.\venv\Scripts\activate
-
-uvicorn main:app --port 8003 --reload
-```
+| **Python** | Version 3.11 or 3.12 (⚠️*Important: Do not use Python 3.14 or experimental versions).* |
+| **SQLite** | Built-in with Python; auto-generates the local database file on startup. |
+| **Ollama** | Local LLM runtime (e.g., serving `llama3.1`)[cite: 11, 18]. |
+| **MCP Server** | *(Optional)* External tool providers such as `mysql-mcp` for agent tool execution[cite: 10, 16]. |
 
 ## 🌐 API Documentation & Usage
 
-Once the server is running, the API is strictly available locally. You can access the auto-generated Swagger endpoint documentation directly on your machine.
+When the service starts, an interactive OpenAPI/Swagger specification interface is served directly from the application.
 
-Navigate to http://localhost:8003/docs in your browser to interact with the API.
+Navigate to http://localhost:8003/docs in your browser to inspect schemas and execute test requests against the endpoints.
 
 ### Endpoint 1: `POST /create-agent`
 
-This endpoint receives the configuration details of a custom agent, saves it to the SQLite database, and returns the created record.
+Registers and saves a new agent configuration in the system database.
 
 **Request Playload (`AgentCreate`)**
 
 ```JSON
 {
-  "name": "Senior Developer",
-  "description": "Expert in React and FastAPI",
-  "systemPrompt": "You are a senior software engineer. Provide clean, well-documented code.",
+  "name": "General Assistant",
+  "description": "General-purpose agent capable of executing optional external tools.",
+  "systemPrompt": "You are a professional assistant designed to execute available tools accurately.",
   "model": "llama3.1",
+  "mcp": "none",
   "collection": "none",
   "temperature": 0.7
 }
@@ -54,7 +47,7 @@ This endpoint receives the configuration details of a custom agent, saves it to 
 
 ### Endpoint 2: `GET /list`
 
-This endpoint fetches an array containing all the saved AI agents currently stored in the database.
+Returns a list containing all saved agent configurations stored in the persistence layer.
 
 **Response Playload (`List[AgentResponse]`)**
 
@@ -62,10 +55,11 @@ This endpoint fetches an array containing all the saved AI agents currently stor
 [
   {
     "id": 1,
-    "name": "DeutschBot",
-    "description": "Agente especializado en traducción instantánea al alemán.",
-    "systemPrompt": "Eres un traductor automático estricto...",
+    "name": "General Assistant",
+    "description": "General-purpose agent capable of executing optional external tools.",
+    "systemPrompt": "You are a professional assistant designed to execute available tools accurately.",
     "model": "llama3.1",
+    "mcp": "none",
     "collection": "none",
     "temperature": 0.7
   }
@@ -75,21 +69,42 @@ This endpoint fetches an array containing all the saved AI agents currently stor
 
 ### Endpoint 3: `GET /agent/{name}`
 
-This endpoint retrieves a specific agent's detailed configuration by searching for its exact name.
+Fetches the configuration specifications of an individual agent by its unique registered name.
 
 **Response Playload (`AgentResponse`)**
 
 ```JSON
 {
-  "name": "Senior Developer",
-  "description": "Expert in React and FastAPI",
-  "systemPrompt": "You are a senior software engineer. Provide clean, well-documented code.",
+  "id": 1,
+  "name": "General Assistant",
+  "description": "General-purpose agent capable of executing optional external tools.",
+  "systemPrompt": "You are a professional assistant designed to execute available tools accurately.",
   "model": "llama3.1",
+  "mcp": "none",
   "collection": "none",
-  "temperature": 0.7,
-  "id": 1
+  "temperature": 0.7
 }
 ```
+
+### Endpoint 4: `GET /agent/{name}/chat`
+
+Executes an interactive reasoning loop with the target agent. If the agent is assigned an optional MCP integration (e.g., a database or search connector), the engine dynamically discovers the provider's capabilities, invokes tools via structured function calling, and delivers an objective synthesis.
+
+**Request Playload (`AgentChatRequest`)**
+```JSON
+{
+"prompt": "Hello! What tasks and tools can you assist me with?",
+  "history": []
+}
+```
+
+**Request Playload**
+```JSON
+{
+  "reply": "Hello! I can analyze information, answer questions, and utilize connected tools to perform real-time actions."
+}
+```
+
 ## 🗄️ Inspecting the Database
 
 To quickly view all saved agents and their configurations (such as their exact `collection` names) in a structured JSON format without installing external SQLite clients, run the following command in your terminal. Ensure you are inside the `agent-service` directory:
@@ -104,19 +119,25 @@ The service relies on the following main components:
 
 | Component | Purpose |
 | :--- | :--- |
-| **FastAPI** | HTTP API framework |
-| **Uvicorn** | ASGI application server |
-| **SQLAlchemy** | SQL toolkit and Object-Relational Mapping (ORM) |
-| **Pydantic** | Request/response validation |
+| **FastAPI** | High-performance asynchronous HTTP routing and API contract framework. |
+| **Uvicorn** | Production-ready ASGI server handling concurrency and socket lifecycles. |
+| **SQLAlchemy** | Declarative ORM and transactional persistence abstraction layer. |
+| **Pydantic** | Schema validation, type enforcement, and serialization for incoming/outgoing DTOs. |
+| **HTTPX** | Fully async HTTP client managing communication with Ollama and MCP endpoints. |
+| **MCP** | Protocol specifications defining standard tool exposure, invocation, and response models. |
 
 ## 📁 Project Structure
 
 ```text
 agent-service/
 │
-├── main.py             # FastAPI entry point, CORS configuration, and HTTP endpoints
-├── agent_logic.py      # Core CRUD operations and database transaction logic
-├── models.py           # Pydantic schemas (DTOs) and SQLAlchemy ORM models
-├── agents.db           # Auto-generated SQLite database (created on startup)
-└── requirements.txt    # Production dependencies
+├── agent_chat.py       # Conversational reasoning loop, tool call dispatcher, and context builder
+├── agent_logic.py      # Persistence operations, query builders, and database business logic
+├── agents.db           # Local SQLite persistent data store
+├── Dockerfile          # Multi-stage image build definition for containerized deployments
+├── main.py             # FastAPI entry point: route declarations, lifecycle hooks, and CORS middleware
+├── mcp_client.py       # Asynchronous client for JSON-RPC 2.0 and SSE event stream integration
+├── models.py           # Pydantic schemas (DTOs) and SQLAlchemy declarative database models
+├── README.md           # Service documentation, API specifications, and architectural overview
+└── requirements.txt    # Frozen production dependencies
 ```
