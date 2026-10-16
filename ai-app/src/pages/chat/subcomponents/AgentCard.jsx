@@ -13,7 +13,9 @@ export default function AgentCard({ agent }) {
 
   const modelName = agent.model || "llama3.1";
   const collectionName = agent.collection && agent.collection !== "none" ? agent.collection : null;
-  const mcpTool = agent.mcp || (agent.model === "mysql-mcp" || agent.model === "github-mcp" ? agent.model : null);
+  const mcpTool = agent.mcp && agent.mcp !== "none" 
+    ? agent.mcp 
+    : (agent.model === "mysql-mcp" || agent.model === "github-mcp" ? agent.model : null);
 
   return (
     <header className="shrink-0 px-6 pt-6 relative z-20">

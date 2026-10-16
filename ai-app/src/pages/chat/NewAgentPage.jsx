@@ -157,22 +157,38 @@ export default function NewAgentPage({ onCancel, onAgentCreated }) {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+                  {/* Model selection */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
+                      LLM Model
+                    </label>
+                    <select
+                      name="model"
+                      value={formData.model || "llama3.1"}
+                      onChange={handleChange}
+                      className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner cursor-pointer"
+                    >
+                      <option value="llama3.1">llama3.1</option>
+                      <option value="qwen2.5:7b">qwen2.5:7b</option>
+                    </select>
+                  </div>
+
+                  {/* MCP Tool selection */}
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1.5">
                       <Wrench size={14} /> Attach Tool (MCP)
                     </label>
-
                     <select
-                      name="model"
-                      value={formData.model}
+                      name="mcp"
+                      value={formData.mcp || "none"}
                       onChange={handleChange}
-                      className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner appearance-none cursor-pointer"
+                      className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner cursor-pointer"
                     >
-                      <option value="none"> No tools attached </option>
-                      <option value="mysql-mcp"> MySQL Database </option>
-                      <option value="github-mcp"> GitHub Repository </option>
+                      <option value="none">No tools attached</option>
+                      <option value="mysql-mcp">MySQL Database</option>
+                      <option value="github-mcp">GitHub Repository</option>
                     </select>
                   </div>
 

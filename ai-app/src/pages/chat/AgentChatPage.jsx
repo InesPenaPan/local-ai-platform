@@ -21,14 +21,24 @@ export default function AgentChatPage({ agent: selectedAgent }) {
   const [input, setInput] = useState("");
   const [agentLoading, setAgentLoading] = useState(true);
   const [agentError, setAgentError] = useState(null);
+  const [mcpLoading, setMcpLoading] = useState(false);
+  const [localMessages, setLocalMessages] = useState([]);
 
   const messagesEndRef = useRef(null);
 
   const {
-    messages,
-    loading,
+    messages: hookMessages,
+    loading: hookLoading,
     sendMessage: sendChatMessage,
   } = useChat();
+
+  /**
+   * Determine whether to use standard hook messages or local state for MCP-driven chats.
+   */
+  const activeTool = agent?.mcp || (agent?.model === "mysql-mcp" ? "mysql-mcp" : null);
+  const isMcpAgent = activeTool === "mysql-mcp";
+  const messages = isMcpAgent ? localMessages : hookMessages;
+  const loading = isMcpAgent ? mcpLoading : hookLoading;
 
   /**
    * Load the full agent configuration when the selected agent changes.
@@ -54,7 +64,6 @@ export default function AgentChatPage({ agent: selectedAgent }) {
         }
 
         const data = await response.json();
-
         setAgent(data);
       } catch (error) {
         console.error("Error loading agent:", error);
@@ -86,10 +95,56 @@ export default function AgentChatPage({ agent: selectedAgent }) {
       return;
     }
 
+    /**
+     * Route message directly to the Agent MCP execution cycle if a tool is attached.
+     */
+    if (isMcpAgent) {
+      const userMessage = { role: "user", content: trimmed };
+      setLocalMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      setMcpLoading(true);
+
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/v1/agent/${encodeURIComponent(agent.name)}/chat`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              prompt: trimmed,
+              history: localMessages.map((m) => ({
+                role: m.role || (m.sender === "user" ? "user" : "assistant"),
+                content: m.content || m.text,
+              })),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`MCP agent error (${response.status})`);
+        }
+
+        const data = await response.json();
+        const assistantMessage = { role: "assistant", content: data.reply || "" };
+        setLocalMessages((prev) => [...prev, assistantMessage]);
+      } catch (error) {
+        console.error("Error communicating with MCP agent:", error);
+        setLocalMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "Error communicating with the database agent." },
+        ]);
+      } finally {
+        setMcpLoading(false);
+      }
+      return;
+    }
+
     let finalSystemPrompt = agent.systemPrompt || "";
 
     /**
-     * Retrieve additional context when the agent uses a RAG collection[cite: 2].
+     * Retrieve additional context when the agent uses a RAG collection.
      */
     if (agent.collection && agent.collection !== "none") {
       try {
@@ -122,18 +177,8 @@ ${searchData.context}`;
           }
         }
       } catch (error) {
-        console.error("Error retrieving RAG context:", error );
+        console.error("Error retrieving RAG context:", error);
       }
-    }
-
-    /**
-     * Inject MCP context instructions if the agent has a tool attached.
-     */
-    const activeTool = agent.mcp || agent.model;
-    if (activeTool === "mysql-mcp") {
-      finalSystemPrompt += `\n\n### MCP TOOL: MySQL Database ###\nYou have access to the MySQL Database MCP. Query tables and schemas safely when needed to answer the user request.`;
-    } else if (activeTool === "github-mcp") {
-      finalSystemPrompt += `\n\n### MCP TOOL: GitHub Repository ###\nYou have access to the GitHub Repository MCP. Inspect code and check files when needed to answer the user request.`;
     }
 
     await sendChatMessage({
@@ -146,8 +191,8 @@ ${searchData.context}`;
   };
 
   /**
-  * Show an error when the agent could not be loaded.
-  */
+   * Show an error when the agent could not be loaded.
+   */
   if (agentError || !agent) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-[#060a11] text-slate-400">

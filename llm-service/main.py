@@ -7,18 +7,19 @@ app = FastAPI(title="LLM Service API")
 @app.post("/generate", response_model=ChatResponse)
 def generate_response(request: ChatRequest):
     """
-    Endpoint that receives conversational message history, model selection, 
-    and an optional system prompt, delegates to Ollama chat, and returns the result.
+    Entry point for handling conversational inference requests and proxying them to Ollama.
     """
     try:
-        generated_text = generate_from_ollama(
+        result = generate_from_ollama(
             model_name=request.model, 
             messages=request.messages,
-            system_prompt=request.system_prompt
+            system_prompt=request.system_prompt,
+            tools=request.tools
         )
-        
-        return ChatResponse(reply=generated_text)
-        
+        return ChatResponse(
+            reply=result.get("reply"),
+            tool_calls=result.get("tool_calls")
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500, 

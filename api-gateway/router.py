@@ -257,6 +257,29 @@ async def proxy_get_agent(name: str):
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
 
+@router.post("/agent/{name}/chat")
+async def proxy_agent_chat(name: str, payload: dict):
+    """
+    Proxies user messages to the agent service and coordinates the MCP execution cycle.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
+            res = await client.post(
+                f"{settings.AGENT_SERVICE_URL}/agent/{name}/chat", 
+                json=payload
+            )
+            res.raise_for_status()
+            return res.json()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream agent-service is unreachable."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code, 
+            detail=f"Downstream agent-service error: {exc.response.text}"
+        )
 
 @router.get("/history/conversations")
 async def proxy_list_conversations():

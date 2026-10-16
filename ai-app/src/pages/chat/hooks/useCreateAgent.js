@@ -7,6 +7,7 @@ const initialFormData = {
   description: "",
   systemPrompt: "",
   model: "llama3.1",
+  mcp: "none",
   collection: "none",
   temperature: 0.7,
 };
@@ -16,8 +17,8 @@ const initialFormData = {
  * and API submission for creating new custom AI assistants.
  * 
  * @function useCreateAgent
- * @param {Object} [options] - Hook configuration options
- * @param {function(Object): void} [options.onAgentCreated] - Callback function triggered upon successfully creating and saving a new agent
+ * @param {Object} [options={}] Hook configuration options
+ * @param {function(Object): void} [options.onAgentCreated] Callback function triggered upon successfully creating and saving a new agent
  * @returns {Object} The agent creation form controller and state variables
  * @returns {Object} returns.formData - The current state of the form fields
  * @returns {boolean} returns.loading - Flag indicating whether an API request is currently in progress
@@ -46,8 +47,8 @@ export function useCreateAgent({ onAgentCreated } = {}) {
   };
 
   /**
-  * Send agent data to the API
-  */
+   * Send agent data to the API gateway
+   */
   const createAgent = async () => {
     setLoading(true);
     setError(null);
@@ -72,10 +73,7 @@ export function useCreateAgent({ onAgentCreated } = {}) {
 
       const result = await response.json();
 
-      console.log("Agent saved successfully:", result);
-
       setSuccessMessage(true);
-
       setFormData(initialFormData);
 
       if (onAgentCreated) {

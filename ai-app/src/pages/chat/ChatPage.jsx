@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, MessageSquare, Activity, Cpu, HardDrive } from "lucide-react";
+import { Bot, MessageSquare } from "lucide-react";
 
 import { useChat } from "./hooks/useChat";
 
@@ -30,12 +30,6 @@ export default function ChatPage({ activeConversationId }) {
 
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
-
   /**
    * Load the selected conversation or clear the chat for a new one.
    */
@@ -51,7 +45,9 @@ export default function ChatPage({ activeConversationId }) {
    * Keep the latest message visible when messages or loading state changes.
    */
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [messages, loading]);
 
   /**
@@ -66,12 +62,16 @@ export default function ChatPage({ activeConversationId }) {
       return;
     }
 
-    await sendMessage({
-      content: trimmed,
-      model: selectedModel,
-    });
+    try {
+      await sendMessage({
+        content: trimmed,
+        model: selectedModel,
+      });
 
-    setInput("");
+      setInput("");
+    } catch (error) {
+      console.error("Error sending chat message:", error);
+    }
   };
 
   return (

@@ -1,13 +1,14 @@
 # 💻 AI Platform: Web Client
 
-> A modern, responsive conversational UI built with **React**, **Vite**, and **Tailwind CSS** to interact seamlessly with the local AI platform via the API Gateway.
+> A modern, responsive conversational UI built with **React**, **Vite**, and **Tailwind CSS** to interact seamlessly with the local AI platform microservices via the centralized API Gateway.
 
-The frontend application provides a clean user interface that can:
+The frontend application provides a modular interface designed to:
 
-* Connect to the centralized API Gateway architecture
-* Manage dynamic conversation sessions and real-time chat interactions
-* Display structured responses from local AI agents and RAG microservices
-* Render fully responsive layouts styled with Tailwind CSS
+- Connect to the centralized API Gateway architecture.
+- Manage dynamic conversation sessions, custom agent execution, and standard model prompts.
+- Administer knowledge bases and document collections for Retrieval-Augmented Generation (RAG).
+- Inspect and monitor connected external tools and MCP servers.
+- Render responsive layouts with custom design tokens styled using Tailwind CSS.
 
 ## 📋 Prerequisites
 
@@ -29,6 +30,28 @@ npm run dev
 
 *The local development server will start at http://localhost:5173*
 
+## 🧭 Key Features & Views
+
+### Chat (`/chat`)
+
+Centralizes conversational workflows, custom agent execution, and prompt interactions[cite: 10]:
+
+- **General Chat (`ChatPage.jsx`):** Serves as the standard LLM workspace for generic prompts, featuring full multi-session history and conversation tracking.
+- **Dedicated Agent Workspaces (`AgentChatPage.jsx`):** Provides an isolated chat interface for each registered agent, binding its custom system prompt and executing multi-turn MCP tool actions.
+- **Agent Creation Studio (`NewAgentPage.jsx`):** Interactive builder form to configure agent identities, system instructions, model parameters, RAG collections, and MCP tool attachments.
+
+### Knowledge Base (`/knowledge`)
+
+Centralized management layer for vector datasets and Retrieval-Augmented Generation:
+
+- **Collections Dashboard (`KnowledgePage.jsx`):** Document collection overview and vector indexing lifecycle management.
+- **Ingestion Modal (`UploadCollectionModal.jsx`):** Structured file upload pipeline and chunking workflows for RAG vector embeddings.
+
+### Tools (`/tools`)
+
+Operational dashboard for system capabilities and connected integrations:
+
+- **MCP Tools Overview (`ToolsPage.jsx`):** Discovery and visualization interface for active MCP tools, server schemas, and microservice capabilities.
 
 ## 📦 Main Dependencies
 
@@ -36,23 +59,48 @@ The application relies on the following core tools and libraries:
 
 | Component | Purpose |
 | :--- | :--- |
-| **React** | Component-based UI library |
-| **Vite** | Lightning-fast frontend build tool and development server |
-| **Tailwind CSS** | Utility-first CSS framework for modern styling |
+| **React** | Declarative component-based UI framework. |
+| **Vite** | Frontend build tool and development server with hot module replacement (HMR). |
+| **Tailwind CSS** | Utility-first styling framework integrated via the modern Vite plugin pipeline. |
 
 ## 📁 Project Structure
 
 ```bash
 ai-app/
 │
-├── src/                   # React source code (components, pages, and hooks)
-│   ├── App.jsx            # Core application routing and layout
-│   ├── main.jsx           # React DOM root bootstrapping.
-│   └── index.css          # Tailwind CSS root imports.
+├── src/
+│   ├── components/
+│   │   ├── layout/            # Reusable navigation bars, sidebars, and container wrappers
+│   │   └── ui/                # Core UI primitives (buttons, inputs, modals, alerts, badges)
+│   │
+│   ├── pages/
+│   │   ├── chat/              # Conversational workflows and agent interfaces
+│   │   │   ├── hooks/         # Custom hooks managing message states and streaming
+│   │   │   ├── subcomponents/ # Message items, input forms, and session lists
+│   │   │   ├── AgentChatModal.jsx
+│   │   │   ├── ChatPage.jsx
+│   │   │   └── NewAgentModal.jsx
+│   │   │
+│   │   ├── knowledge/         # Knowledge base and RAG document administration
+│   │   │   ├── hooks/         # Hooks for collection fetching and document upload status
+│   │   │   ├── subcomponents/ # Collection cards, document tables, and upload zones
+│   │   │   ├── KnowledgePage.jsx
+│   │   │   └── UploadCollectionModal.jsx
+│   │   │
+│   │   └── tools/             # Tool inspection and MCP status views
+│   │       ├── subcomponents/ # Tool cards, schema viewers, and status indicators
+│   │       └── ToolsPage.jsx
+│   │
+│   ├── App.css                # Global style overrides
+│   ├── App.jsx                # Application routing configuration and layout boundaries
+│   ├── index.css              # Tailwind CSS imports and utility layer definitions
+│   └── main.jsx               # React DOM root entry point
 │
-├── package.json           # Frontend dependencies, scripts, and build tasks.
-├── vite.config.js         # Vite configuration including @tailwindcss/vite plugin.
-├── eslint.config.js       # ESLint rules and React hooks configurations.
-├── index.html             # HTML entry template.
-└── README.md              # Frontend architecture and usage documentation.
+├── .gitignore                 # Version control exclusions
+├── Dockerfile                 # Multi-stage container deployment specification
+├── eslint.config.js           # ESLint configuration and React rules
+├── index.html                 # HTML template entry file
+├── package-lock.json          # Deterministic dependency tree lockfile
+├── package.json               # Node manifests, build scripts, and production dependencies
+└── README.md                  # Frontend architecture, installation, and usage documentation
 ```
