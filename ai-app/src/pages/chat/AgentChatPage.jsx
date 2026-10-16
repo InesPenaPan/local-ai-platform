@@ -30,6 +30,8 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     messages: hookMessages,
     loading: hookLoading,
     sendMessage: sendChatMessage,
+    clearMessages,
+    setMessages,
   } = useChat();
 
   /**
@@ -41,9 +43,18 @@ export default function AgentChatPage({ agent: selectedAgent }) {
   const loading = isMcpAgent ? mcpLoading : hookLoading;
 
   /**
-   * Load the full agent configuration when the selected agent changes.
+   * Load the full agent configuration and reset chat history when the selected agent changes.
    */
   useEffect(() => {
+    // Limpiar el historial tanto de MCP como del hook general al cambiar de agente
+    setLocalMessages([]);
+    setInput("");
+    if (typeof clearMessages === "function") {
+      clearMessages();
+    } else if (typeof setMessages === "function") {
+      setMessages([]);
+    }
+
     if (!selectedAgent?.name) {
       setAgentLoading(false);
       setAgentError("No agent has been selected.");
@@ -74,7 +85,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
     };
 
     fetchAgent();
-  }, [selectedAgent]);
+  }, [selectedAgent?.name]);
 
   /**
    * Keep the latest message visible when the chat changes.
@@ -206,7 +217,7 @@ ${searchData.context}`;
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
+    <div key={agent.name} className="flex flex-col h-full w-full bg-[#060a11] text-slate-100 font-sans overflow-hidden">
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#04070c] shadow-[inset_1px_0_10px_rgba(0,0,0,0.5)]">
 
         {/* Agent information card component */}
@@ -226,7 +237,7 @@ ${searchData.context}`;
             </div>
           )}
 
-          {/* Message list and loading indicator. */}
+          {/* Message list and loading indicator */}
           <div className="max-w-4xl w-full mx-auto p-6 md:p-8 pt-8 space-y-8 relative z-10 pb-24">
 
             {messages.map((msg, idx) => (
@@ -256,7 +267,7 @@ ${searchData.context}`;
           </div>
         </div>
 
-        {/* Input area for writing and submitting messages. */}
+        {/* Input area for writing and submitting messages */}
         <PromptInput
           input={input}
           setInput={setInput}
