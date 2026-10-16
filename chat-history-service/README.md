@@ -1,28 +1,28 @@
 # 📚 Chat History Service: Persistent Conversational Storage
 
-> Built with **FastAPI** and **SQLAlchemy**, it acts as the persistence abstraction layer to manage conversation sessions and store message histories locally using SQLite.
+> Built with **FastAPI** and **SQLAlchemy**, this service acts as the persistence abstraction layer to manage conversation sessions and store message histories locally using SQLite.
 
-The service provides a local RAG (Retrieval-Augmented Generation) infrastructure layer that can:
+The service provides a dedicated conversational persistence layer that can:
 
 * Create and manage chat conversation sessions
 * Store and retrieve user prompts, assistant replies, and system messages
-* Automatically organize message histories by conversation ID
-* Handle relational data with automatic cascading deletions
-
+* Automatically organize message histories ordered chronologically by conversation
+* Handle relational data with automatic cascading deletions upon conversation removal
 
 ## 📋 Prerequisites
 
 Before running this microservice, ensure you have the following installed and configured:
 
-| Requirement | Details & Commands |
+| Requirement | Details & Description |
 | :--- | :--- |
-| **Python** | Version 3.12 (⚠️*Important: Do not use Python 3.14 or experimental versions to avoid Rust/C++ compilation errors with Pydantic-core)*.|
+| **Python** | Version 3.11 or 3.12 (⚠️ *Important: Avoid experimental versions or Python 3.14 to prevent compilation issues with Pydantic-core*). |
+| **SQLite** | Standard embedded relational engine supplied with Python; automatically provisions `chat_history.db` on launch. |
 
 ## 🌐 API Documentation & Usage
 
-Once the server is running, the API is strictly available locally. You can access the auto-generated endpoint documentation directly on your machine.
+When the service starts, an interactive OpenAPI/Swagger specification interface is served directly from the application.
 
-Navigate to http://localhost:8001/docs in your browser to interact with the API.
+Navigate to http://localhost:8004/docs in your browser to inspect schemas and execute test requests against the endpoints.
 
 ### Endpoint 1: `POST /conversations`
 
@@ -42,7 +42,7 @@ Retrieve a list of all saved conversations ordered by newest first.
 
 ### Endpoint 2: `POST /conversations`
 
-Create a new conversation session and return its details.
+Creates a new conversation session and returns its persisted details.
 
 **Request Playload (`ConversationCreate`)**
 
@@ -74,20 +74,20 @@ Retrieve all messages belonging to a specific conversation ID.
     "id": 1,
     "conversation_id": 1,
     "role": "user",
-    "content": "What is the company's AI architecture?"
+    "content": "What is an MCP Server?"
   },
   {
     "id": 2,
     "conversation_id": 1,
     "role": "assistant",
-    "content": "The company uses a distributed AI architecture..."
+    "content": "A Model Context Protocol server exposes standardized tools and resources to LLMs..."
   }
 ]
 ```
 
 ### Endpoint 4: `POST /conversations/{conversation_id}/messages`
 
-Save a new message (user prompt or assistant reply) under a specific conversation ID.
+Saves a new message (user prompt, assistant reply, or system message) under a specific conversation ID.
 
 **Request Playload (`MessageCreate`)**
 
@@ -106,6 +106,19 @@ Save a new message (user prompt or assistant reply) under a specific conversatio
   "conversation_id": 1,
   "role": "user",
   "content": "Can you elaborate on the vector database?"
+}
+```
+
+### Endpoint 5: `DELETE /conversations/{conversation_id}`
+
+Deletes a conversation session along with all associated messages via cascading deletion.
+
+**Response Playload**
+
+```JSON
+{
+  "ok": true,
+  "message": "Conversation deleted successfully"
 }
 ```
 
@@ -131,20 +144,22 @@ The service relies on the following main components:
 
 | Component | Purpose |
 | :--- | :--- |
-| **FastAPI** | HTTP API framework |
-| **Uvicorn** | ASGI application server |
-| **SQLAlchemy** | SQL toolkit and Object Relational Mapper (ORM) |
-| **SQLite** | Local relational database for persistent storage |
-| **Pydantic** | Request/response validation and serialization |
+| **FastAPI** | High-performance asynchronous API framework and route declarations. |
+| **Uvicorn** | ASGI server managing concurrent requests and network sockets. |
+| **SQLAlchemy** | Declarative ORM and transactional persistence abstraction layer. |
+| **SQLite** | Embedded local relational database storage. |
+| **Pydantic** | Schema validation, type enforcement, and serialization for incoming/outgoing DTOs. |
 
 ## 📁 Directory Structure
 
 ```bash
 chat-history-service/
 │
+├── chat_history.db      # Local SQLite database file (auto-generated on startup)
+├── db_manager.py        # SQLAlchemy configuration, ORM models, and database session generator
+├── Dockerfile           # Multi-stage container deployment specification
 ├── main.py              # FastAPI application controller and HTTP routes
 ├── models.py            # Pydantic schemas (Contracts, Enums, and DTOs)
-├── db_manager.py        # SQLAlchemy configuration, database models, and session dependency
-├── chat_history.db      # Local SQLite database file (auto-generated)
-└── requirements.txt     # Project dependencies (FastAPI, Uvicorn, SQLAlchemy, Pydantic)
+├── README.md            # Service documentation, API specifications, and architectural overview
+└── requirements.txt     # Pinned production dependencies
 ```

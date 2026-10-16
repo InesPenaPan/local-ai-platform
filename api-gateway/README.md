@@ -22,7 +22,7 @@ Before running this microservice, ensure you have the following installed and co
 
 ## 🌐 Routes & Proxy Mapping
 
-he Gateway routes incoming client traffic to targeted downstream microservices under the `/api/v1` prefix:
+Thee Gateway routes incoming client traffic to targeted downstream microservices under the `/api/v1` prefix:
 
 | Method | Gateway Endpoint | Target Service | Description |
 | :--- | :--- | :--- | :--- |
