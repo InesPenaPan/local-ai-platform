@@ -4,7 +4,7 @@
 
 ## 🏛️ System Architecture & Services
 
-The ecosystem operates as a distributed system with standardized network boundaries and dedicated service responsibilities[cite: 2, 3]:
+The ecosystem operates as a distributed system with standardized network boundaries and dedicated service responsibilities:
 
 | Service | Port | Technology | Primary Responsibility |
 | :--- | :--- | :--- | :--- |
@@ -16,6 +16,36 @@ The ecosystem operates as a distributed system with standardized network boundar
 | **`chat-history-service`** | `8004` | FastAPI, SQLAlchemy, SQLite | Persistent conversational session storage and message history tracking. |
 | **`qdrant`** | `6333` | Qdrant Vector Engine | Embedded vector storage and nearest-neighbor vector similarity retrieval. |
 | **`mysql-mcp`** | `8080` | Node.js, MCP Protocol | *(Optional)* Model Context Protocol bridge server enabling database inspection and query execution. |
+
+The following diagram illustrates the high-level system architecture, service communication pathways, and persistent storage layers:
+
+```text
+                                [ User / Browser ]
+                                       │
+                                       ▼
+                   ┌─────────────────────────────────────────────┐
+                   │                ai-app                       │
+                   └─────────────────────────────────────────────┘
+                                       │
+                                       │ HTTP REST Requests
+                                       ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+ │                               api-gateway                                                 │               
+ └───────────────────────────────────────────────────────────────────────────────────────────┘
+         │                  │                  │                  │                   │
+         │                  │                  │                  │                   │
+         ▼                  ▼                  ▼                  ▼                   ▼
+ ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  ┌──────────────────────┐  ┌───────────┐
+ │ llm-service │  │ rag-service │  │ agent-service │  │ chat-history-service │  │ mysql-mcp │  
+ └─────────────┘  └─────────────┘  └───────────────┘  └──────────────────────┘  └───────────┘ 
+         │                  │                  │                  │
+         │                  │                  │                  ▼
+         │                  │                  │             [ chat_history.db ]
+         ▼                  ▼                  ▼             (SQLite Database)
+    [ OLLAMA ]    ┌─────────────┐         [ agents.db ]
+ (Local Models)   │    Qdrant   │        (SQLite Database)
+                  └─────────────┘ 
+```
 
 ## 📋 Prerequisites
 
