@@ -136,6 +136,20 @@ services:
     restart: always
     networks:
       - ai_network
+      
+  # GitHub MCP Service (Port 8081)
+  github-mcp:
+    build: ./github-mcp
+    container_name: github_mcp
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
+    restart: always
+    networks:
+      - ai_network
 
 volumes:
   qdrant_storage:
