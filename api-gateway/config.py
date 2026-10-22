@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     AGENT_SERVICE_URL: str = os.getenv("AGENT_SERVICE_URL", "http://agent-service:8003")
     CHAT_HISTORY_SERVICE_URL: str = os.getenv("CHAT_HISTORY_SERVICE_URL", "http://chat-history-service:8004")
     MYSQL_MCP_URL: str = os.getenv("MYSQL_MCP_URL", "http://mysql-mcp:8080")
+    GITHUB_MCP_URL: str = os.getenv("GITHUB_MCP_URL", "http://github-mcp:8080")
 
     # Shared secret key for authenticating requests across microservices and MCP servers
     REMOTE_SECRET_KEY: str
