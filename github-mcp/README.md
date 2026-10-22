@@ -1,8 +1,6 @@
 # 🐙 GitHub MCP Server
 
 > A Model Context Protocol (MCP) bridge server enabling Large Language Models and AI agents to securely interact with the GitHub API, inspect repositories, manage pull requests, and automate developer workflows.
->
-## ⚙️ Overview & Capabilities
 
 This component containerizes and adapts the official Model Context Protocol integration for GitHub, exposing repository and code management tools over network transports. 
 
