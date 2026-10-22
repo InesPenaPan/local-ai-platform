@@ -19,7 +19,7 @@ Before running this microservice, ensure you have the following installed:
 | **Python** | Version 3.11 or 3.12 (⚠️*Important: Do not use Python 3.14 or experimental versions).* |
 | **SQLite** | Built-in with Python; auto-generates the local database file on startup. |
 | **Ollama** | Local LLM runtime (e.g., serving `llama3.1`). |
-| **MCP Server** | *(Optional)* External tool providers such as `mysql-mcp` for agent tool execution. |
+| **MCP Server** | *(Optional)* External tool providers such as `mysql-mcp` o `github-mcp` for agent tool execution. |
 
 ## 🌐 API Documentation & Usage
 
@@ -126,6 +126,13 @@ To quickly view all saved agents and their configurations (such as their exact `
 python -c "import sqlite3, json; c=sqlite3.connect('agents.db'); c.row_factory=sqlite3.Row; print(json.dumps([dict(r) for r in c.execute('SELECT * FROM agents')], indent=2, ensure_ascii=False))"
 ```
 
+## 🔌 Model Context Protocol (MCP) Integration
+
+The service includes a dedicated `mcp-clients` package that handles communication with external Model Context Protocol servers using JSON-RPC 2.0 over HTTP/SSE transports.
+
+* **MySQL MCP Client (`mysql_client.py`)**: Connects to the downstream `mysql-mcp` service to allow agents to inspect database schemas and execute safe query operations.
+* **MySQL MCP Client (`github_client.py`)**: Connects to the downstream `github-mcp` service to enable repository exploration, code searches, issue management, and workflow checks.
+
 ## 📦 Main Dependencies
 
 The service relies on the following main components:
@@ -137,7 +144,7 @@ The service relies on the following main components:
 | **SQLAlchemy** | Declarative ORM and transactional persistence abstraction layer. |
 | **Pydantic** | Schema validation, type enforcement, and serialization for incoming/outgoing DTOs. |
 | **HTTPX** | Fully async HTTP client managing communication with Ollama and MCP endpoints. |
-| **MCP** | Protocol specifications defining standard tool exposure, invocation, and response models. |
+| **MCP SDK** | Protocol specifications defining standard tool exposure, invocation, and response framing. |
 
 ## 📁 Project Structure
 
@@ -149,7 +156,10 @@ agent-service/
 ├── agents.db           # Local SQLite persistent data store
 ├── Dockerfile          # Multi-stage image build definition for containerized deployments
 ├── main.py             # FastAPI entry point: route declarations, lifecycle hooks, and CORS middleware
-├── mcp_client.py       # Asynchronous client for JSON-RPC 2.0 and SSE event stream integration
+├── mcp-clients/        # Modular MCP client implementations
+│   ├── __init__.py     # Package initialization module
+│   ├── github_client.py# Asynchronous client for GitHub repository inspection and workflows
+│   └── mysql_client.py # Asynchronous client for MySQL database schema and query tools
 ├── models.py           # Pydantic schemas (DTOs) and SQLAlchemy declarative database models
 ├── README.md           # Service documentation, API specifications, and architectural overview
 └── requirements.txt    # Frozen production dependencies
