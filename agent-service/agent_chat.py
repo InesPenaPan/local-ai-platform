@@ -1,7 +1,8 @@
 import os
 import json
 import httpx
-from mcp_client import MySQLMCPAgentClient
+from mcp_clients.mysql_client import MySQLMCPAgentClient
+from mcp_clients.github_client import GitHubMCPAgentClient
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
 DEFAULT_MODEL = "llama3.1"
