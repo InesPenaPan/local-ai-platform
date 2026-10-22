@@ -18,8 +18,8 @@ Before running this microservice, ensure you have the following installed:
 | :--- | :--- |
 | **Python** | Version 3.11 or 3.12 (⚠️*Important: Do not use Python 3.14 or experimental versions).* |
 | **SQLite** | Built-in with Python; auto-generates the local database file on startup. |
-| **Ollama** | Local LLM runtime (e.g., serving `llama3.1`)[cite: 11, 18]. |
-| **MCP Server** | *(Optional)* External tool providers such as `mysql-mcp` for agent tool execution[cite: 10, 16]. |
+| **Ollama** | Local LLM runtime (e.g., serving `llama3.1`). |
+| **MCP Server** | *(Optional)* External tool providers such as `mysql-mcp` for agent tool execution. |
 
 ## 🌐 API Documentation & Usage
 
@@ -115,7 +115,7 @@ Deletes an existing agent configuration from the database by its unique identifi
 {
   "message": "Agent deleted successfully"
 }
-
+```
 
 
 ## 🗄️ Inspecting the Database
