@@ -131,7 +131,7 @@ python -c "import sqlite3, json; c=sqlite3.connect('agents.db'); c.row_factory=s
 The service includes a dedicated `mcp-clients` package that handles communication with external Model Context Protocol servers using JSON-RPC 2.0 over HTTP/SSE transports.
 
 * **MySQL MCP Client (`mysql_client.py`)**: Connects to the downstream `mysql-mcp` service to allow agents to inspect database schemas and execute safe query operations.
-* **MySQL MCP Client (`github_client.py`)**: Connects to the downstream `github-mcp` service to enable repository exploration, code searches, issue management, and workflow checks.
+* **GitHub MCP Client (`github_client.py`)**: Connects to the downstream `github-mcp` service to enable repository exploration, code searches, issue management, and workflow checks.
 
 ## 📦 Main Dependencies
 
