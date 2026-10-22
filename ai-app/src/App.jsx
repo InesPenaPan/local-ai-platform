@@ -6,6 +6,7 @@ import Sidebar from "./pages/chat/subcomponents/SideBar";
 import ChatPage from "./pages/chat/ChatPage";
 import NewAgentPage from "./pages/chat/NewAgentPage";
 import AgentChatPage from "./pages/chat/AgentChatPage";
+import GuardrailsPage from "./pages/chat/GuardrailsPage";
 import KnowledgePage from "./pages/knowledge/KnowledgePage";
 import ToolsPage from "./pages/tools/ToolsPage";
 
@@ -25,6 +26,7 @@ export default function App() {
     "chat",
     "create-agent",
     "agent-chat",
+    "guardrails", // Añadido para que la sidebar siga visible
   ].includes(currentTab);
 
   /**
@@ -105,6 +107,7 @@ export default function App() {
               setCurrentTab("chat");
             }}
             onDeleteConversation={handleDeleteConversation}
+            onGuardrailsClick={() => setCurrentTab("guardrails")} // Conecta el botón del Sidebar al estado
           />
         )}
 
@@ -131,6 +134,11 @@ export default function App() {
               onBack={() => handleNavigate("chat")}
             />
           )}
+          
+          {/* Guardrails */}
+          {currentTab === "guardrails" && (
+            <GuardrailsPage />
+          )}
 
           {/* Knowledge base */}
           {currentTab === "rag" && (
@@ -147,4 +155,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, Bot, Trash2, Loader2 } from "lucide-react";
+import { MessageSquarePlus, Bot, Trash2, Loader2, Settings } from "lucide-react";
 
 import NewButton from "./NewButton";
 import useDeleteAgent from "./../hooks/useDeleteAgent";
@@ -82,6 +82,7 @@ function SidebarItem({ item, type, onClick, onAction }) {
  * @param {(conversationId: string | number) => void} [props.onSelectConversation] Callback triggered when a past conversation is selected
  * @param {(conversation: Object) => void} [props.onDeleteChat] Callback triggered when deleting a past conversation
  * @param {(agent: Object) => void} [props.onDeleteAgent] Callback triggered when deleting an agent
+ * @param {() => void} [props.onGuardrailsClick] Callback triggered when the Guardrails button is clicked
  * @returns {JSX.Element} The rendered sidebar navigation drawer
  */
 export default function Sidebar({
@@ -91,6 +92,7 @@ export default function Sidebar({
   onSelectConversation,
   onDeleteChat,
   onDeleteAgent,
+  onGuardrailsClick,
 }) {
   const [agents, setAgents] = useState([]);
   const [pastConversations, setPastConversations] = useState([]);
@@ -267,6 +269,7 @@ export default function Sidebar({
       {/* Guardrails section */}
       <div className="mt-auto pt-4 border-t border-white/5">
         <button 
+          onClick={onGuardrailsClick}
           className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer text-slate-400 hover:text-white"
         >
           <Settings size={16} className="shrink-0" />

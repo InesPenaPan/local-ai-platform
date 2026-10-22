@@ -3,6 +3,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import ToolCard from "./subcomponents/ToolCard";
 import githubLogo from "../../assets/github-logo.webp"; 
 import mysqlLogo from "../../assets/mysql-logo.png";
+import folderLogo from "../../assets/folder.webp";
 
 /**
  * ToolsPage component serves as the configuration dashboard for managing
@@ -46,8 +47,8 @@ export default function ToolsPage() {
       capabilities: "Navigate directories (list_directory), inspect file metadata (file_info), read file contents (read_file), and write data (write_file).",
       status: "online",
       enabled: false,
-      isImage: false,
-      icon: HardDrive
+      isImage: true,
+      icon: folderLogo
     }
   ]);
 
