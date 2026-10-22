@@ -461,3 +461,36 @@ async def proxy_mysql_mcp_health():
             status_code=exc.response.status_code,
             detail=f"Downstream MySQL MCP service error: {exc.response.text}"
         )
+
+
+@router.get("/github/health")
+async def proxy_github_mcp_health():
+    """
+    Checks connectivity and health status of the downstream GitHub MCP service.
+    """
+    try:
+        headers = {"x-secret-key": settings.REMOTE_SECRET_KEY}
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.get(f"{settings.GITHUB_MCP_URL}/mcp", headers=headers)
+            return {
+                "status": "connected",
+                "target_service": "github-mcp",
+                "http_status": response.status_code,
+                "url": settings.GITHUB_MCP_URL
+            }
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream GitHub MCP service is unreachable (port 8080 unavailable)."
+        )
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The GitHub MCP service took too long to respond."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream GitHub MCP service error: {exc.response.text}"
+        )
