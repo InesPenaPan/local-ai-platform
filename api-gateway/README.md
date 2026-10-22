@@ -41,7 +41,8 @@ Thee Gateway routes incoming client traffic to targeted downstream microservices
 | **`GET`** | `/history/conversations/{id}/messages` | `chat-history-service:8004` | Fetches all stored messages belonging to a conversation. |
 | **`POST`** | `/history/conversations/{id}/messages` | `chat-history-service:8004` | Appends a new user or assistant message to a conversation. |
 | **`DELETE`** | `/history/conversations/{id}` | `chat-history-service:8004` | Deletes a conversation session and all its stored messages. |
-| **`DELETE`** | `/mysql/health` | `mysql-mcp:8080` | Verifies health and connectivity status of the MySQL MCP provider. |
+| **`GET`** | `/mysql/health` | `mysql-mcp:8080` | Verifies health and connectivity status of the MySQL MCP provider. |
+| **`GET`** | `/github/health` | `github-mcp:8080` | Verifies health and connectivity status of the GitHub MCP provider. |
 
 
 ## 📦 Main Dependencies
