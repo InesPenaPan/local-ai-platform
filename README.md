@@ -16,35 +16,40 @@ The ecosystem operates as a distributed system with standardized network boundar
 | **`chat-history-service`** | `8004` | FastAPI, SQLAlchemy, SQLite | Persistent conversational session storage and message history tracking. |
 | **`qdrant`** | `6333` | Qdrant Vector Engine | Embedded vector storage and nearest-neighbor vector similarity retrieval. |
 | **`mysql-mcp`** | `8080` | Node.js, MCP Protocol | *(Optional)* Model Context Protocol bridge server enabling database inspection and query execution. |
+| **`github-mcp`** | `8081` | Node.js, MCP Protocol | *(Optional)* Model Context Protocol bridge server enabling GitHub repository inspection, PR management, and code workflows. |
 
 The following diagram illustrates the high-level system architecture, service communication pathways, and persistent storage layers:
 
 ```text
-                                [ User / Browser ]
-                                       │
-                                       ▼
-                   ┌─────────────────────────────────────────────┐
-                   │                ai-app                       │
-                   └─────────────────────────────────────────────┘
-                                       │
-                                       │ HTTP REST Requests
-                                       ▼
- ┌───────────────────────────────────────────────────────────────────────────────────────────┐
- │                               api-gateway                                                 │               
- └───────────────────────────────────────────────────────────────────────────────────────────┘
-         │                  │                  │                  │                   │
-         │                  │                  │                  │                   │
-         ▼                  ▼                  ▼                  ▼                   ▼
- ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  ┌──────────────────────┐  ┌───────────┐
- │ llm-service │  │ rag-service │  │ agent-service │  │ chat-history-service │  │ mysql-mcp │  
- └─────────────┘  └─────────────┘  └───────────────┘  └──────────────────────┘  └───────────┘ 
-         │                  │                  │                  │
-         │                  │                  │                  ▼
-         │                  │                  │             [ chat_history.db ]
-         ▼                  ▼                  ▼             (SQLite Database)
-    [ OLLAMA ]    ┌─────────────┐         [ agents.db ]
- (Local Models)   │    Qdrant   │        (SQLite Database)
-                  └─────────────┘ 
+                      [ User / Browser ]
+                                │
+                                ▼
+                  ┌─────────────────────────┐
+                  │         ai-app          │
+                  └─────────────────────────┘
+                                │ HTTP REST
+                                ▼
+                  ┌─────────────────────────┐
+                  │       api-gateway       │
+                  └─────────────────────────┘
+         ┌─────────┬─────────┬─────────┬────────────┬─────────────┐
+         │         │         │         │            │             │
+         ▼         ▼         ▼         ▼            ▼             ▼
+      ┌──────┐  ┌──────┐  ┌───────┐  ┌───────┐  ┌─────────┐ ┌─────────┐
+      │ llm- │  │ rag- │  │ agent-│  │ chat- │  │  mysql- │ │ github- │
+      │ serv │  │ serv │  │  serv │  │  hist │  │   mcp   │ │   mcp   │
+      └──────┘  └──────┘  └───────┘  └───────┘  └─────────┘ └─────────┘
+         │         │          │          │
+         │         │          ▼          ▼
+         │         │    [ agents.db ] [ chat_history.db ]
+         │         │    (SQLite DB)   (SQLite DB)
+         │         ▼
+         │     ┌──────────┐
+         │     │  Qdrant  │
+         │     └──────────┘
+         ▼
+     [ OLLAMA ]
+   (Local Models)
 ```
 
 ## 📋 Prerequisites
@@ -111,6 +116,7 @@ local-ai-platform/
 ├── ai-app/                 # Responsive React/Vite user interface (Chat, Knowledge, Tools)
 ├── api-gateway/            # Central asynchronous reverse proxy and route orchestrator
 ├── chat-history-service/   # Session persistence, relational message storage, and SQLite backend
+├── github-mcp/             # MCP GitHub server exposing code/repository inspection tools over HTTP/SSE
 ├── llm-service/            # Local model inference abstraction layer interfacing with Ollama
 ├── mysql-mcp/              # MCP database server exposing SQL inspection tools over HTTP/SSE
 ├── rag-service/            # Document parsing, chunking, embedding generation, and Qdrant retrieval
