@@ -263,6 +263,17 @@ export default function Sidebar({
           ))}
         </div>
       </div>
+
+      {/* Guardrails section */}
+      <div className="mt-auto pt-4 border-t border-white/5">
+        <button 
+          className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer text-slate-400 hover:text-white"
+        >
+          <Settings size={16} className="shrink-0" />
+          <span className="text-sm font-light truncate">Guardrails</span>
+        </button>
+      </div>
+      
     </aside>
   );
 }
