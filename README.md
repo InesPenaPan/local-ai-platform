@@ -54,8 +54,8 @@ Before deploying the platform, verify that your environment satisfies the follow
 | Requirement | Details & Description |
 | :--- | :--- |
 | **Docker & Docker Compose** | Engine v24+ and Docker Compose v2+ installed for multi-container orchestration. |
-| **Ollama** | [Download Ollama](https://ollama.com/) and ensure the background daemon is running and reachable on `http://localhost:11434` (or `http://host.docker.internal:11434`). |
-| **LLM Inference Models** | Pull and run your desired model before initiating inference calls (e.g., `ollama pull llama3.1` and `ollama run llama3.1`). |
+| **Ollama** | [Download Ollama](https://ollama.com/) and ensure the background daemon is running and reachable on `http://localhost:11434`. |
+| **LLM Inference Models** | Pull your desired model before initiating inference calls (e.g., `ollama pull llama3.1`). |
 | **Embedding Models** | Pull and run the local embedding model used by the RAG service: `ollama run nomic-embed-text`.|
 
 ## 🚀 Running the App
@@ -95,9 +95,9 @@ docker compose ps
 
 Once initialized, access the graphical dashboards and technical interfaces directly from your browser:
 
-* Frontend Application (Web UI): http://localhost:5173
-* API Gateway Swagger Documentation: http://localhost:8000/docs
-* Qdrant Vector Database Web Dashboard: http://localhost:6333/dashboard
+* **Frontend Application (Web UI)**: http://localhost:5173
+* **API Gateway Swagger Documentation**: http://localhost:8000/docs
+* **Qdrant Vector Database Web Dashboard**: http://localhost:6333/dashboard
 
 
 ## 📁 Project Structure
