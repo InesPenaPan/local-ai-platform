@@ -22,6 +22,11 @@ let transport = null;
 app.get("/mcp", async (req, res) => {
   transport = new SSEServerTransport("/messages", res);
   await server.connect(transport);
+
+  // Clean up transport reference on client disconnect
+  res.on("close", () => {
+    transport = null;
+  });
 });
 
 app.post("/messages", async (req, res) => {
@@ -33,5 +38,5 @@ app.post("/messages", async (req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(`🐙 GitHub MCP Server running on http://${HOST}:${PORT}/mcp`);
+  console.log(`GitHub MCP Server running on http://${HOST}:${PORT}/mcp`);
 });
