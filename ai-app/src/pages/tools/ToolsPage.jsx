@@ -36,6 +36,18 @@ export default function ToolsPage() {
       enabled: false,
       isImage: true,
       iconSrc: githubLogo
+    },
+    {
+      id: "filesystem-mcp",
+      name: "Local File System MCP",
+      description: "Allows the AI agent to securely navigate directories, read file contents, and write data to the local file system.",
+      details: "Provides a direct bridge to the host machine's file system within a specified safe directory. The agent can traverse folders to understand project structures, read logs or configuration files directly, and save generated scripts or reports to disk without requiring manual copy-pasting.",
+      connectedResource: "Linked to a restricted local directory path on the host machine or container.",
+      capabilities: "Navigate directories (list_directory), inspect file metadata (file_info), read file contents (read_file), and write data (write_file).",
+      status: "online",
+      enabled: false,
+      isImage: false,
+      icon: HardDrive
     }
   ]);
 
