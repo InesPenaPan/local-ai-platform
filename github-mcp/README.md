@@ -19,3 +19,20 @@ Configure GitHub authentication and network binding using the following environm
 | **`PORT`** | Listening port for the HTTP/SSE service (default: `8080`). |
 | **`GITHUB_PERSONAL_ACCESS_TOKEN`** | Personal Access Token (PAT) with appropriate scopes (repo, issues, etc.) for GitHub API authentication. |
 | **`GITHUB_API_URL`** | Optional custom base URL for GitHub Enterprise instances (defaults to `https://api.github.com`). |
+
+### 🔑 How to configure the `GITHUB_PERSONAL_ACCESS_TOKEN`
+
+The MCP server requires a **Personal Access Token (PAT)**. It will *not* work with a GitHub App Client Secret. 
+
+**Note:** This project specifically uses **Fine-grained personal access tokens** for enhanced security and granular permission control.
+
+To generate the correct token for your local AI agent:
+1. Navigate directly to the [GitHub Fine-grained Tokens page](https://github.com/settings/personal-access-tokens/new) (or manually go to **Settings** > **Developer settings** > **Personal access tokens** > **Fine-grained tokens**).
+2. Click **Generate new token**.
+3. Set a **Token name** (e.g., `mcp-local-agent`) and a **Description** (e.g., "Token for local AI agent MCP access").
+4. **Repository access:** Select **All repositories** (or explicitly select the targeted repositories you want the AI to analyze).
+5. **Permissions:** Under **Repository permissions**, grant **Read-only** access to the following:
+   - **Contents**
+   - **Metadata**
+6. Click **Generate token** at the bottom of the page.
+7. Copy the generated token (it will start with `github_pat_...`) and assign it to the `GITHUB_PERSONAL_ACCESS_TOKEN` variable in your `.env` file.

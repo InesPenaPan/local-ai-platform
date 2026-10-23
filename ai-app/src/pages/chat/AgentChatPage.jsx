@@ -16,7 +16,6 @@ const JSON_HEADERS = {
   "Content-Type": "application/json",
 };
 
-const MCP_TOOL_MYSQL = "mysql-mcp";
 const DEFAULT_TOP_K = 3;
 
 /**
@@ -48,9 +47,9 @@ export default function AgentChatPage({ agent: selectedAgent }) {
 
   /**
    * Determine whether to use standard hook messages or local state for MCP-driven chats.
+   * Modificado para aceptar cualquier MCP válido ("none" significa que no usa MCP).
    */
-  const activeTool = agent?.mcp || (agent?.model === MCP_TOOL_MYSQL ? MCP_TOOL_MYSQL : null);
-  const isMcpAgent = activeTool === MCP_TOOL_MYSQL;
+  const isMcpAgent = agent?.mcp && agent.mcp !== "none";
   const messages = isMcpAgent ? localMessages : hookMessages;
   const loading = isMcpAgent ? mcpLoading : hookLoading;
 
@@ -148,7 +147,7 @@ export default function AgentChatPage({ agent: selectedAgent }) {
         console.error("Error communicating with MCP agent:", error);
         setLocalMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "Error communicating with the database agent." },
+          { role: "assistant", content: "Error communicating with the agent service." },
         ]);
       } finally {
         setMcpLoading(false);
