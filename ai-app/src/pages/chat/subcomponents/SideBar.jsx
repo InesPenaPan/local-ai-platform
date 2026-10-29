@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, Bot, Trash2, Loader2, Settings } from "lucide-react";
+import { MessageSquarePlus, Bot, Trash2, Loader2, Settings, Edit3 } from "lucide-react";
 
 import NewButton from "./NewButton";
 import useDeleteAgent from "./../hooks/useDeleteAgent";
@@ -21,13 +21,17 @@ const CONVERSATIONS_ENDPOINT = `${API_BASE_URL}/history/conversations`;
  * @param {'agent' | 'conversation'} props.type The category/type of the sidebar item
  * @param {() => void} props.onClick Callback function triggered when the item container is clicked
  * @param {(item: Object) => void} [props.onAction] Callback function triggered when the action button (delete) is clicked
+ * @param {(item: Object) => void} [props.onEdit] Callback function triggered when the edit button is clicked (agents only)
  * @returns {JSX.Element} The rendered sidebar item element
  */
-function SidebarItem({ item, type, onClick, onAction }) {
+function SidebarItem({ item, type, onClick, onAction, onEdit }) {
   const isAgent = type === "agent";
 
   return (
-    <div onClick={onClick} className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer">
+    <div 
+      onClick={onClick} 
+      className="group relative flex items-center justify-between w-full py-2.5 px-3 rounded-xl bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all duration-200 cursor-pointer"
+    >
       <div className="flex items-center gap-3 min-w-0">
 
         {/* Colored status indicator distinguishes agents from conversations. */}
@@ -53,18 +57,37 @@ function SidebarItem({ item, type, onClick, onAction }) {
         </span>
       </div>
 
-      {/* Secondary action is only visible while hovering over the item. */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAction?.(item);
-        }}
-        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all shrink-0 ml-2"
-        title={isAgent ? "Delete Agent" : "Delete Conversation"}
-      >
-        <Trash2 size={13} />
-      </button>
+      {/* Action buttons container visible on hover */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+        
+        {/* Render edit button exclusively for custom agents */}
+        {isAgent && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(item);
+            }}
+            className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+            title="Edit Agent"
+          >
+            <Edit3 size={13} />
+          </button>
+        )}
+
+        {/* Delete action button for both agents and conversations */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction?.(item);
+          }}
+          className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+          title={isAgent ? "Delete Agent" : "Delete Conversation"}
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -72,13 +95,14 @@ function SidebarItem({ item, type, onClick, onAction }) {
 /**
  * Sidebar component acts as the primary navigation drawer for the application,
  * managing the layout and state for past conversations and custom AI agents.
- * It handles data fetching on mount, selection events, and delete actions.
+ * It handles data fetching on mount, selection events, and delete/edit redirections.
  *
  * @component
  * @param {Object} props Component properties
- * @param {() => void} props.onNewConversation Callback triggered to start a new conversation
+ * @param {() => void} props.onNewConversation Callback triggered to start a new conversation and redirect correctly
  * @param {() => void} props.onNewAgentClick Callback triggered to open the creation flow for a new agent
- * @param {(agent: Object) => void} [props.onSelectAgent] Callback triggered when an agent is selected
+ * @param {(agent: Object) => void} [props.onSelectAgent] Callback triggered when an agent is selected for chatting
+ * @param {(agent: Object) => void} [props.onEditAgent] Callback triggered when editing an existing agent
  * @param {(conversationId: string | number) => void} [props.onSelectConversation] Callback triggered when a past conversation is selected
  * @param {(conversation: Object) => void} [props.onDeleteChat] Callback triggered when deleting a past conversation
  * @param {(agent: Object) => void} [props.onDeleteAgent] Callback triggered when deleting an agent
@@ -89,6 +113,7 @@ export default function Sidebar({
   onNewConversation,
   onNewAgentClick,
   onSelectAgent,
+  onEditAgent,
   onSelectConversation,
   onDeleteChat,
   onDeleteAgent,
@@ -154,16 +179,16 @@ export default function Sidebar({
   }, []);
 
   /**
-   * Select conversation.
+   * Select conversation and redirect safely.
    */
   const handleSelectConversation = (conversation) => {
     if (!conversation?.id) {
-      console.error("SIDEBAR - La conversación no tiene ID:", conversation);
+      console.error("SIDEBAR - Conversation missing ID:", conversation);
       return;
     }
 
     if (typeof onSelectConversation !== "function") {
-      console.error("SIDEBAR - onSelectConversation no está definido");
+      console.error("SIDEBAR - onSelectConversation is not defined");
       return;
     }
 
@@ -171,17 +196,25 @@ export default function Sidebar({
   };
 
   /**
-   * Select agent.
+   * Select agent to start a chat session.
    */
   const handleSelectAgent = (agent) => {
-    console.log("SIDEBAR - Agent seleccionado:", agent);
+    console.log("SIDEBAR - Agent selected for chat:", agent);
     onSelectAgent?.(agent);
+  };
+
+  /**
+   * Handle editing an agent by passing it upstream to open the pre-filled form.
+   */
+  const handleEditAgent = (agent) => {
+    console.log("SIDEBAR - Agent selected for editing:", agent);
+    onEditAgent?.(agent);
   };
 
   return (
     <aside className="w-72 h-full bg-[#0b111c]/95 border-r border-white/5 flex flex-col p-5 select-none z-40">
 
-      {/* New conversation */}
+      {/* New conversation button with correct routing/redirection */}
       <NewButton
         icon={MessageSquarePlus}
         label="New Conversation"
@@ -189,7 +222,7 @@ export default function Sidebar({
         className="mt-10"
       />
 
-      {/* Conversations */}
+      {/* Conversations list section */}
       <div className="mt-4 flex flex-col space-y-1">
 
         {pastConversations.map((conversation) => (
@@ -218,7 +251,7 @@ export default function Sidebar({
           Agents
         </h3>
 
-        {/* New agent */}
+        {/* New agent button */}
         <NewButton
           icon={Bot}
           label="New Agent"
@@ -226,10 +259,10 @@ export default function Sidebar({
           className="mb-4 shrink-0"
         />
 
-        {/* Agents list */}
+        {/* Agents scrollable list */}
         <div className="flex flex-col space-y-1 overflow-y-auto max-h-[calc(100vh-220px)] custom-scrollbar pr-1">
 
-          {/* Loading */}
+          {/* Loading state indicator */}
           {loading && (
             <div className="flex items-center gap-2.5 px-3 py-3 text-xs text-slate-500 bg-white/[0.02] rounded-xl border border-white/5">
               <Loader2 size={14} className="animate-spin text-[#3b82f6]"/>
@@ -239,21 +272,21 @@ export default function Sidebar({
             </div>
           )}
 
-          {/* Error */}
+          {/* Error handling state indicator */}
           {!loading && error && (
             <div className="px-3 py-3 text-xs text-rose-400 bg-rose-950/20 rounded-xl border border-rose-500/10 font-light">
               Failed to sync agents.
             </div>
           )}
 
-          {/* Empty */}
+          {/* Empty state placeholder */}
           {!loading && !error && agents.length === 0 && (
             <div className="px-3 py-4 text-xs text-slate-500 font-light bg-white/[0.01] rounded-xl border border-dashed border-white/5 text-center">
               No custom agents created yet.
             </div>
           )}
 
-          {/* Agents */}
+          {/* Render mapped agent items with click, edit, and delete handlers */}
           {!loading && !error && agents.map((agent) => (
             <SidebarItem
               key={agent.id ?? agent.name}
@@ -261,12 +294,13 @@ export default function Sidebar({
               type="agent"
               onClick={() => handleSelectAgent(agent)}
               onAction={deleteAgent}
+              onEdit={handleEditAgent}
             />
           ))}
         </div>
       </div>
 
-      {/* Guardrails section */}
+      {/* Guardrails section footer */}
       <div className="mt-auto pt-4 border-t border-white/5">
         <button 
           onClick={onGuardrailsClick}

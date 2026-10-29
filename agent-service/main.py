@@ -118,3 +118,16 @@ def delete_agent(agent_id: int, db: Session = Depends(get_db)):
             detail=f"Agent with ID '{agent_id}' not found"
         )
     return {"message": "Agent deleted successfully"}
+
+@app.put("/agent/{name}", response_model=AgentResponse)
+def update_agent(name: str, agent_update: AgentCreate, db: Session = Depends(get_db)):
+    """
+    Updates an existing agent's configuration details by its unique name.
+    """
+    updated_agent = agent_logic.update_agent_by_name(db, name, agent_update)
+    if updated_agent is None:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Agente con el nombre '{name}' no encontrado para actualizar"
+        )
+    return updated_agent

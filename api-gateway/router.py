@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 import httpx
+from urllib.parse import quote
 
 from config import settings
 from schemas import (
@@ -493,4 +494,37 @@ async def proxy_github_mcp_health():
         raise HTTPException(
             status_code=exc.response.status_code,
             detail=f"Downstream GitHub MCP service error: {exc.response.text}"
+        )
+
+@router.put("/agent/{name}")
+async def proxy_update_agent(name: str, payload: dict):
+    """
+    Forwards a request to update an existing agent by name to the downstream agent-service.
+    """
+    try:
+        # Usamos quote() de urllib.parse para codificar correctamente el nombre en la URL
+        encoded_name = quote(name)
+        
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            response = await client.put(
+                f"{settings.AGENT_SERVICE_URL}/agent/{encoded_name}",
+                json=payload
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream agent-service is unreachable (port 8003 unavailable)."
+        )
+    except httpx.ReadTimeout:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="The agent-service took too long to respond."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream agent-service error: {exc.response.text}"
         )

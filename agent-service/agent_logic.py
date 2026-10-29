@@ -39,3 +39,19 @@ def delete_agent_by_id(db: Session, agent_id: int):
     db.delete(db_agent)
     db.commit()
     return True
+
+def update_agent_by_name(db: Session, name: str, agent_update: AgentCreate):
+    """
+    Updates an existing agent configuration by its unique name.
+    """
+    from main import AgentDB
+    db_agent = db.query(AgentDB).filter(AgentDB.name == name).first()
+    if not db_agent:
+        return None
+    
+    for key, value in agent_update.model_dump().items():
+        setattr(db_agent, key, value)
+        
+    db.commit()
+    db.refresh(db_agent)
+    return db_agent
