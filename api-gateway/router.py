@@ -528,3 +528,53 @@ async def proxy_update_agent(name: str, payload: dict):
             status_code=exc.response.status_code,
             detail=f"Downstream agent-service error: {exc.response.text}"
         )
+
+@router.get("/guardrails/config")
+async def proxy_get_guardrails_config():
+    """
+    Fetches the global guardrails configuration from the downstream guardrails-service.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            guardrails_url = getattr(settings, "GUARDRAILS_SERVICE_URL", "http://guardrails-service:8005")
+            response = await client.get(f"{guardrails_url}/config")
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream guardrails-service is unreachable (port 8005 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream guardrails-service error: {exc.response.text}"
+        )
+
+@router.post("/guardrails/config")
+async def proxy_update_guardrails_config(request: Request):
+    """
+    Forwards a request to update the global guardrails configuration to the downstream guardrails-service.
+    """
+    try:
+        payload = await request.json()
+        async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT_SECONDS) as client:
+            guardrails_url = getattr(settings, "GUARDRAILS_SERVICE_URL", "http://guardrails-service:8005")
+            response = await client.post(
+                f"{guardrails_url}/config",
+                json=payload
+            )
+            response.raise_for_status()
+            return response.json()
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Downstream guardrails-service is unreachable (port 8005 unavailable)."
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Downstream guardrails-service error: {exc.response.text}"
+        )
