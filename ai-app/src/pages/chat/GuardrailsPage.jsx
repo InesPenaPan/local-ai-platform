@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Save, ShieldAlert, Lock, ShieldCheck, Loader2 } from "lucide-react";
+import { Save, ShieldAlert, Lock, Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
 
 /**
  * GuardrailsPage component renders a configuration interface for defining
- * global safety rules, content filters, and strict operational boundaries
- * for all AI agents running on the platform.
+ * global safety rules and content boundaries for all AI agents running on the platform.
  * 
  * @component
  * @returns {JSX.Element} The rendered guardrails configuration page layout
@@ -18,18 +17,15 @@ export default function GuardrailsPage() {
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
-    strictMode: true,
-    contentFilterLevel: "high",
     globalSystemInstruction: "",
     bannedTopics: "",
-    maxTokens: 2048,
   });
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -57,7 +53,7 @@ export default function GuardrailsPage() {
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
             <PageHeader
               title="Global Guardrails"
-              subtitle="Configure safety filters, operational boundaries, and system-wide rules for all agents."
+              subtitle="Configure operational boundaries and system-wide rules for all agents."
             />
           </div>
 
@@ -76,58 +72,6 @@ export default function GuardrailsPage() {
 
           <FormWrapper>
             <form onSubmit={handleSubmit} className="space-y-8">
-
-              {/* Safety & Enforcement */}
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 text-slate-300 border-b border-white/5 pb-2 mb-4">
-                  <ShieldCheck size={16} className="text-[#DE145C]"/>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider">
-                    Safety & Enforcement
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* Strict Mode Toggle */}
-                  <div className="flex flex-col justify-center">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          name="strictMode"
-                          checked={formData.strictMode}
-                          onChange={handleChange}
-                          className="sr-only"
-                        />
-                        <div className={`block w-10 h-6 rounded-full transition-colors ${formData.strictMode ? 'bg-[#3b82f6]' : 'bg-slate-700'}`}></div>
-                        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.strictMode ? 'transform translate-x-4' : ''}`}></div>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-slate-200">Enforce Strict Mode</div>
-                        <div className="text-xs font-light text-slate-500 mt-0.5">Prevent tools from modifying external systems without confirmation.</div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* Content Filter Level */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
-                      Content Filter Level
-                    </label>
-                    <select
-                      name="contentFilterLevel"
-                      value={formData.contentFilterLevel}
-                      onChange={handleChange}
-                      className="w-full bg-[#04070c] border border-white/10 hover:border-white/25 focus:border-[#3b82f6] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-all shadow-inner cursor-pointer"
-                    >
-                      <option value="low">Low (Permissive)</option>
-                      <option value="medium">Medium (Standard)</option>
-                      <option value="high">High (Strict)</option>
-                    </select>
-                  </div>
-
-                </div>
-              </div>
 
               {/* Operational Boundaries */}
               <div className="space-y-5">
