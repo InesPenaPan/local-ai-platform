@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, ShieldAlert, Lock, Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/ui/PageHeader";
 import FormWrapper from "../../components/layout/FormWrapper";
+
+// Definimos la URL base para el endpoint de guardrails en el API Gateway
+const GUARDRAILS_ENDPOINT = "http://localhost:8000/api/v1/guardrails/config";
 
 /**
  * GuardrailsPage component renders a configuration interface for defining
@@ -21,6 +24,27 @@ export default function GuardrailsPage() {
     bannedTopics: "",
   });
 
+  // useEffect para cargar la configuración existente al montar el componente
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch(GUARDRAILS_ENDPOINT);
+        if (response.ok) {
+          const data = await response.json();
+          setFormData({
+            globalSystemInstruction: data.global_system_instruction || "",
+            bannedTopics: data.banned_topics || "",
+          });
+        } else {
+            console.error("Failed to load existing guardrails configuration.");
+        }
+      } catch (err) {
+        console.error("Error loading guardrails config:", err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -35,12 +59,31 @@ export default function GuardrailsPage() {
     setError(null);
     setSuccessMessage(false);
 
-    // Simulated API call for saving guardrails
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Realizamos la llamada POST real al backend
+      const response = await fetch(GUARDRAILS_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          strict_mode: true, // Mantemos strict_mode como true por defecto
+          global_system_instruction: formData.globalSystemInstruction,
+          banned_topics: formData.bannedTopics,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save guardrails configuration");
+      }
+
       setSuccessMessage(true);
       setTimeout(() => setSuccessMessage(false), 3000);
-    }, 1000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

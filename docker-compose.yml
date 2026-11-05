@@ -57,17 +57,6 @@ services:
     networks:
       - ai_network
 
-  # Guardrails Service (Port 8005) - Centralized Safety Engine
-  guardrails-service:
-    build: ./guardrails-service
-    container_name: guardrails_service
-    ports:
-      - "8005:8005"
-    volumes:
-      - ./guardrails-service:/app
-    restart: always
-    networks:
-      - ai_network
 
   # Agent Service (Port 8003)
   agent-service:
@@ -84,11 +73,9 @@ services:
       - OLLAMA_URL=http://host.docker.internal:11434
       - MYSQL_MCP_URL=http://mysql-mcp:8080/mcp
       - GITHUB_MCP_URL=http://github-mcp:8080/mcp
-      - GUARDRAILS_SERVICE_URL=http://guardrails-service:8005
       - REMOTE_SECRET_KEY=${REMOTE_SECRET_KEY}
     depends_on:
       - llm-service
-      - guardrails-service
     restart: unless-stopped
     networks:
       - ai_network
@@ -104,7 +91,6 @@ services:
       - RAG_SERVICE_URL=http://rag-service:8002
       - AGENT_SERVICE_URL=http://agent-service:8003
       - CHAT_HISTORY_SERVICE_URL=http://chat-history-service:8004
-      - GUARDRAILS_SERVICE_URL=http://guardrails-service:8005
       - MYSQL_MCP_URL=http://mysql-mcp:8080
       - REMOTE_SECRET_KEY=${REMOTE_SECRET_KEY}
     depends_on:
@@ -112,7 +98,6 @@ services:
       - rag-service
       - agent-service
       - chat-history-service
-      - guardrails-service
     restart: always
     networks:
       - ai_network

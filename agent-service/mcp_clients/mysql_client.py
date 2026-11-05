@@ -7,8 +7,14 @@ SECRET_KEY = os.getenv("REMOTE_SECRET_KEY", "4a8f9c2d1e0b5a7f3e6c8b9a0d2e4f1a5b8
 
 class MySQLMCPAgentClient:
     """
-    Client for MySQL MCP Stateless Streamable HTTP Server over JSON-RPC 2.0.
-    Handles standard JSON parsing and Server-Sent Events (SSE) data framing.
+    Handles communication between the AI agent and the MySQL MCP server.
+
+    It allows the agent to:
+    - Discover available database tools.
+    - Convert those tools into a format Ollama understands.
+    - Execute database operations and retrieve their results.
+
+    Communication uses JSON-RPC 2.0 over HTTP.
     """
 
     def __init__(self):
@@ -19,10 +25,14 @@ class MySQLMCPAgentClient:
             "Authorization": f"Bearer {SECRET_KEY}",
         }
 
+
     async def _send_rpc(self, method: str, params: dict = None) -> dict:
         """
-        Dispatches a JSON-RPC 2.0 request and parses standard or SSE responses.
+        Send a JSON-RPC request to MySQL MCP and return the server's result.
+        Supports standard JSON and SSE responses.
         """
+
+        # Build the JSON-RPC request
         payload = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -30,18 +40,24 @@ class MySQLMCPAgentClient:
             "params": params or {},
         }
 
+        # Open an asynchronous HTTP connection to the MCP server.
         async with httpx.AsyncClient(timeout=60.0) as client:
+
+            # Send the request and wait for the server's response.
             res = await client.post(self.endpoint, json=payload, headers=self.headers)
+            
             res.raise_for_status()
 
+            # Read the response text and prepare to decode it.
             raw_text = res.text.strip()
             data = None
 
-            # Attempt decoding standard JSON payload
+            # First, try to read the response as standard JSON.
             try:
                 data = json.loads(raw_text)
+
+            # If JSON parsing fails, check for JSON inside SSE data lines.
             except Exception:
-                # Fallback: Parse Server-Sent Events (SSE) stream lines
                 for line in raw_text.splitlines():
                     trimmed_line = line.strip()
                     if trimmed_line.startswith("data:"):
@@ -52,22 +68,30 @@ class MySQLMCPAgentClient:
                         except Exception:
                             continue
 
+            # Make sure the server returned a valid JSON object.
             if not data or not isinstance(data, dict):
                 raise Exception(f"Failed to parse MySQL MCP response: {raw_text}")
 
+            # Check whether the server returned a JSON-RPC error.
             if "error" in data:
                 raise Exception(f"MySQL MCP RPC Error: {data['error']}")
 
+            # Return the actual result without the JSON-RPC wrapper.
             return data.get("result", {})
 
     async def get_tools_for_ollama(self):
         """
-        Retrieves remote database tools and maps them to Ollama-compatible function schemas.
+        Retrieve MySQL MCP tools and convert them into Ollama's format.
         """
-        result = await self._send_rpc("tools/list")
-        raw_tools = result.get("tools", [])
 
+        # Ask MCP for all available tools.
+        result = await self._send_rpc("tools/list")
+
+        # Extract the tools from the server response.
+        raw_tools = result.get("tools", [])
         ollama_tools = []
+
+        # Convert each MCP tool into the function format Ollama understands.
         for tool in raw_tools:
             ollama_tools.append({
                 "type": "function",
@@ -77,24 +101,32 @@ class MySQLMCPAgentClient:
                     "parameters": tool.get("inputSchema", {}),
                 },
             })
+
+        # Return all available tools so Ollama can use them.
         return ollama_tools
 
     async def execute_tool(self, tool_name: str, arguments: dict) -> str:
         """
-        Executes a database query or schema inspection tool via the MCP protocol.
+        Execute a selected MySQL MCP tool and return its result as text.
         """
         params = {
             "name": tool_name,
             "arguments": arguments,
         }
-        result = await self._send_rpc("tools/call", params)
-        content_items = result.get("content", [])
 
+        # Ask MCP to execute the selected tool.
+        result = await self._send_rpc("tools/call", params)
+
+        # Extract the content returned by the executed tool.
+        content_items = result.get("content", [])
         output_texts = []
+
+        # Collect readable text from each returned content item.
         for item in content_items:
             if isinstance(item, dict) and "text" in item:
                 output_texts.append(item["text"])
             elif isinstance(item, str):
                 output_texts.append(item)
 
+        # Combine all text results into one string.
         return "\n".join(output_texts) if output_texts else str(result)

@@ -151,8 +151,8 @@ The service relies on the following main components:
 ```text
 agent-service/
 │
-├── agent_chat.py       # Conversational reasoning loop, tool call dispatcher, and context builder
-├── agent_logic.py      # Persistence operations, query builders, and database business logic
+├── agent_executor.py   # Conversational reasoning loop, tool call dispatcher, and context builder
+├── agent_db_manager.py # Database configuration, SQLAlchemy models, and CRUD operations
 ├── agents.db           # Local SQLite persistent data store
 ├── Dockerfile          # Multi-stage image build definition for containerized deployments
 ├── main.py             # FastAPI entry point: route declarations, lifecycle hooks, and CORS middleware
@@ -160,7 +160,7 @@ agent-service/
 │   ├── __init__.py     # Package initialization module
 │   ├── github_client.py# Asynchronous client for GitHub repository inspection and workflows
 │   └── mysql_client.py # Asynchronous client for MySQL database schema and query tools
-├── models.py           # Pydantic schemas (DTOs) and SQLAlchemy declarative database models
+├── models.py           # Pydantic schemas (DTOs) for data validation
 ├── README.md           # Service documentation, API specifications, and architectural overview
 └── requirements.txt    # Frozen production dependencies
 ```
